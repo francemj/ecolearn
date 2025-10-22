@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 export const runtime = 'edge';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
@@ -31,7 +31,7 @@ Year: ${paperContext?.year || 'N/A'}
 Answer questions based on this research paper. Keep responses clear, factual, and grounded in the paper's content.`;
 
     const chatMessages: Message[] = [
-      { role: 'user', content: systemPrompt },
+      { role: 'system', content: systemPrompt },
       ...messages,
     ];
 

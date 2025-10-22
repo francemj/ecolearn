@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import ImpactCounter from './ImpactCounter';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
