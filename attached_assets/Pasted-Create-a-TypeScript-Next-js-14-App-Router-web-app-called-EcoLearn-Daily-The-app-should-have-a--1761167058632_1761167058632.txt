@@ -1,0 +1,98 @@
+Create a TypeScript Next.js 14 (App Router) web app called “EcoLearn Daily”.
+
+The app should have a calm, minimalist design. White background, soft gray tones, serif typography (Merriweather or Libre Baskerville), generous spacing, and gentle fade-in transitions. No ads, gamification, notifications, or tracking. Add a small footer that says “Built to learn, not to keep you hooked.”
+
+Core features:
+
+Daily Topic Fetcher
+
+Each day shows one sustainability-related research paper.
+
+Fetch from OpenAlex API (primary) or CrossRef API (fallback).
+
+Select a topic based on hashing today’s date so all users see the same topic.
+
+Display: title, summary/abstract, authors, year, and a link to the original paper.
+
+Cache the result for 24 hours to avoid rate limits.
+
+If no data is available, display: “Today’s research is still being fetched — check back soon.”
+
+AI Chat Interface
+
+Under the topic, show a simple chat box for questions such as “How serious is this issue globally?”
+
+POST messages to /app/api/chat/route.ts.
+
+Use OpenAI’s API (gpt-4-turbo or gpt-5).
+
+System prompt:
+“You are an assistant that explains environmental research in calm, factual, and accessible language. Use only the facts from the provided study text. Avoid speculation, politics, or moralizing.”
+
+Stream the response for a smooth conversation.
+
+If the API key is missing, show: “Chat unavailable — add your OpenAI key in .env to enable responses.”
+
+Conversation Impact Counter
+
+Add a small counter that estimates environmental cost of the conversation.
+
+Assume 0.25 Wh per 1,000 tokens and 0.4 g CO₂ per Wh.
+
+After each message, update and display:
+“This conversation has used about X Wh (~Y g CO₂).”
+
+Keep it subtle and gray.
+
+Calm Design
+
+Use TailwindCSS for styling.
+
+Responsive layout (centered desktop, padded mobile).
+
+Optional dark-mode toggle.
+
+Folder structure:
+
+/app
+/api
+/topic/route.ts
+/chat/route.ts
+/components
+TopicCard.tsx
+Chat.tsx
+ImpactCounter.tsx
+/styles/globals.css
+page.tsx
+
+Data flow:
+
+page.tsx → calls /api/topic → renders TopicCard
+Chat.tsx → posts to /api/chat → streams replies → updates ImpactCounter
+
+Environment variables (.env):
+
+OPENAI_API_KEY=your-openai-key-here
+
+Setup:
+
+Use Next.js 14 + TypeScript + TailwindCSS + ESLint.
+After generation, print instructions on:
+
+Adding the OpenAI key.
+
+Running locally (npm run dev).
+
+Testing /api/topic in console.
+
+Design goals:
+
+Quiet, factual, mindful experience.
+
+No streaks, metrics, or notifications.
+
+Modular, well-commented code.
+
+If APIs return nothing, show friendly placeholders instead of errors.
+
+Always show the impact counter summary at the bottom.
