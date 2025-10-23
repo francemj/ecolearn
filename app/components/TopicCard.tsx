@@ -1,19 +1,19 @@
-'use client';
+"use client"
 
 interface Reference {
-  title: string;
-  authors: string[];
-  year: number;
-  url: string | null;
+  title: string
+  authors: string[]
+  year: number
+  url: string | null
 }
 
 interface TopicCardProps {
   topic: {
-    topic: string;
-    summary: string;
-    references: Reference[];
-  } | null;
-  loading: boolean;
+    topic: string
+    summary: string
+    references: Reference[]
+  } | null
+  loading: boolean
 }
 
 export default function TopicCard({ topic, loading }: TopicCardProps) {
@@ -28,7 +28,7 @@ export default function TopicCard({ topic, loading }: TopicCardProps) {
           <div className="h-4 bg-sage-green/20 dark:bg-gray-700 rounded w-2/3"></div>
         </div>
       </div>
-    );
+    )
   }
 
   if (!topic) {
@@ -38,7 +38,7 @@ export default function TopicCard({ topic, loading }: TopicCardProps) {
           Unable to load today&apos;s research summary. Please try again later.
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -75,13 +75,14 @@ export default function TopicCard({ topic, loading }: TopicCardProps) {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   {ref.authors.length > 0 ? (
                     <>
-                      <span className="font-light">Authors:</span> {ref.authors.join(', ')}
-                      {ref.authors.length === 3 && ' et al.'}
+                      <span className="font-light">Authors:</span>{" "}
+                      {ref.authors.join(", ")}
+                      {ref.authors.length === 3 && " et al."}
                     </>
                   ) : (
                     <span className="font-light">Authors not available</span>
                   )}
-                  {' • '}
+                  {" • "}
                   <span className="font-light">{ref.year}</span>
                 </p>
                 {ref.url && (
@@ -100,5 +101,5 @@ export default function TopicCard({ topic, loading }: TopicCardProps) {
         </div>
       )}
     </div>
-  );
+  )
 }

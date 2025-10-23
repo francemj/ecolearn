@@ -1,136 +1,132 @@
-'use client';
+"use client"
 
-import { useState, useRef, useEffect } from 'react';
-import ImpactCounter from './ImpactCounter';
-import { Tone } from './ToneToggle';
+import { useState, useRef, useEffect } from "react"
+import ImpactCounter from "./ImpactCounter"
+import { Tone } from "./ToneToggle"
 
 interface Message {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
+  role: "user" | "assistant" | "system"
+  content: string
 }
 
 interface Reference {
-  title: string;
-  authors: string[];
-  year: number;
-  url: string | null;
+  title: string
+  authors: string[]
+  year: number
+  url: string | null
 }
 
 interface ChatProps {
   topicContext: {
-    topic: string;
-    summary: string;
-    references: Reference[];
-  } | null;
-  tone: Tone;
+    topic: string
+    summary: string
+    references: Reference[]
+  } | null
+  tone: Tone
 }
 
 export default function Chat({ topicContext, tone }: ChatProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [totalTokens, setTotalTokens] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [totalTokens, setTotalTokens] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom()
+  }, [messages])
 
   const estimateTokens = (text: string): number => {
-    return Math.ceil(text.length / 4);
-  };
+    return Math.ceil(text.length / 4)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    e.preventDefault()
+    if (!input.trim() || isLoading) return
 
-    const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInput('');
-    setIsLoading(true);
-    setError(null);
+    const userMessage: Message = { role: "user", content: input }
+    const newMessages = [...messages, userMessage]
+    setMessages(newMessages)
+    setInput("")
+    setIsLoading(true)
+    setError(null)
 
-    const userTokens = estimateTokens(input);
-    setTotalTokens(prev => prev + userTokens);
+    const userTokens = estimateTokens(input)
+    setTotalTokens((prev) => prev + userTokens)
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
+      const response = await fetch("/api/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           messages: newMessages,
           topicContext,
           tone,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to get response');
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to get response")
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
 
       if (!reader) {
-        throw new Error('No response stream available');
+        throw new Error("No response stream available")
       }
 
-      let assistantMessage = '';
-      setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+      let assistantMessage = ""
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }])
 
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        const { done, value } = await reader.read()
+        if (done) break
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        const chunk = decoder.decode(value)
+        const lines = chunk.split("\n")
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6)
+            if (data === "[DONE]") continue
 
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              
-              if (content) {
-                assistantMessage += content;
-                setMessages(prev => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = {
-                    role: 'assistant',
-                    content: assistantMessage,
-                  };
-                  return updated;
-                });
-              }
-            } catch (e) {
-              // Skip parsing errors for incomplete chunks
+            const parsed = JSON.parse(data)
+            const content = parsed.choices?.[0]?.delta?.content
+
+            if (content) {
+              assistantMessage += content
+              setMessages((prev) => {
+                const updated = [...prev]
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content: assistantMessage,
+                }
+                return updated
+              })
             }
           }
         }
       }
 
-      const assistantTokens = estimateTokens(assistantMessage);
-      setTotalTokens(prev => prev + assistantTokens);
+      const assistantTokens = estimateTokens(assistantMessage)
+      setTotalTokens((prev) => prev + assistantTokens)
     } catch (err) {
-      console.error('Chat error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      setMessages(prev => prev.slice(0, -1));
+      console.error("Chat error:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+      setMessages((prev) => prev.slice(0, -1))
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-6 fade-in border border-sage-green/30 dark:border-sage-green/50">
@@ -149,13 +145,13 @@ export default function Chat({ topicContext, tone }: ChatProps) {
           <div
             key={idx}
             className={`p-4 rounded ${
-              msg.role === 'user'
-                ? 'bg-white dark:bg-gray-700 ml-8 border border-sage-green/30 dark:border-sage-green/50'
-                : 'bg-sage-light/30 dark:bg-gray-900 mr-8 border border-sage-green/30 dark:border-sage-green/50'
+              msg.role === "user"
+                ? "bg-white dark:bg-gray-700 ml-8 border border-sage-green/30 dark:border-sage-green/50"
+                : "bg-sage-light/30 dark:bg-gray-900 mr-8 border border-sage-green/30 dark:border-sage-green/50"
             }`}
           >
             <p className="text-xs text-sage-green dark:text-sage-light mb-1 font-medium">
-              {msg.role === 'user' ? 'You' : 'Assistant'}
+              {msg.role === "user" ? "You" : "Assistant"}
             </p>
             <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
               {msg.content}
@@ -179,11 +175,11 @@ export default function Chat({ topicContext, tone }: ChatProps) {
           disabled={isLoading || !input.trim()}
           className="px-6 py-3 bg-gradient-to-r from-dark-teal to-dark-green text-white rounded-lg hover:from-dark-green hover:to-sage-green disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
         >
-          {isLoading ? 'Thinking...' : 'Ask'}
+          {isLoading ? "Thinking..." : "Ask"}
         </button>
       </form>
 
       <ImpactCounter totalTokens={totalTokens} />
     </div>
-  );
+  )
 }

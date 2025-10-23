@@ -1,74 +1,58 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"
 
-export const runtime = "edge";
-
-interface OpenAlexWork {
-  id: string;
-  title: string;
-  abstract_inverted_index?: Record<string, number[]>;
-  authorships?: Array<{
-    author: {
-      display_name: string;
-    };
-  }>;
-  publication_year?: number;
-  primary_location?: {
-    landing_page_url?: string;
-  };
-  doi?: string;
-}
+export const runtime = "edge"
 
 interface Reference {
-  title: string;
-  authors: string[];
-  year: number;
-  url: string | null;
+  title: string
+  authors: string[]
+  year: number
+  url: string | null
 }
 
 let cachedTopic: {
-  academic: any;
-  casual: any;
-  date: string;
-} | null = null;
+  academic: any
+  casual: any
+  date: string
+} | null = null
 
 function getTodayDateString(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
 }
 
 function hashDateToTopicIndex(dateString: string): number {
-  let hash = 0;
+  let hash = 0
   for (let i = 0; i < dateString.length; i++) {
-    hash = (hash << 5) - hash + dateString.charCodeAt(i);
-    hash = hash & hash;
+    hash = (hash << 5) - hash + dateString.charCodeAt(i)
+    hash = hash & hash
   }
-  return Math.abs(hash);
+  return Math.abs(hash)
 }
 
 function reconstructAbstract(invertedIndex?: Record<string, number[]>): string {
-  if (!invertedIndex) return "";
+  if (!invertedIndex) return ""
 
-  const words: [string, number][] = [];
+  const words: [string, number][] = []
   for (const [word, positions] of Object.entries(invertedIndex)) {
     for (const pos of positions) {
-      words.push([word, pos]);
+      words.push([word, pos])
     }
   }
 
-  words.sort((a, b) => a[1] - b[1]);
-  return words.map((w) => w[0]).join(" ");
+  words.sort((a, b) => a[1] - b[1])
+  return words.map((w) => w[0]).join(" ")
 }
 
 async function generateAISummary(
   topic: string,
   papers: Reference[],
   abstracts: string[],
-  tone: 'academic' | 'casual',
+  tone: "academic" | "casual"
 ): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY
 
   if (!apiKey) {
-    return `Today's topic is ${topic}. Multiple research papers on this topic have been gathered, but AI summary generation is unavailable. Add your OpenAI key to enable AI-powered summaries.`;
+    return `Today's topic is ${topic}. Multiple research papers on this topic have been gathered, but AI summary generation is unavailable. Add your OpenAI key to enable AI-powered summaries.`
   }
 
   const papersContext = papers
@@ -76,9 +60,9 @@ async function generateAISummary(
       (paper, idx) =>
         `Paper ${idx + 1}: "${paper.title}" (${paper.year})
 Authors: ${paper.authors.join(", ")}
-Abstract: ${abstracts[idx]}`,
+Abstract: ${abstracts[idx]}`
     )
-    .join("\n\n");
+    .join("\n\n")
 
   const academicSystemPrompt = `You are a research synthesizer that creates clear, accessible summaries of multiple academic papers on environmental topics. Your summaries should:
 - Be calm, factual, and engaging
@@ -86,7 +70,7 @@ Abstract: ${abstracts[idx]}`,
 - Note any important disagreements or gaps
 - Use accessible language for non-experts
 - Be 3-4 paragraphs long
-- Focus on what we know and what matters`;
+- Focus on what we know and what matters`
 
   const casualSystemPrompt = `You are a friendly guide who helps people understand environmental research in a laid-back, conversational way. Your summaries should:
 - Be warm, approachable, and down-to-earth
@@ -95,22 +79,23 @@ Abstract: ${abstracts[idx]}`,
 - Still be accurate and respect the science
 - Be 3-4 paragraphs long
 - Make complex ideas feel accessible without dumbing them down
-- Show genuine enthusiasm for interesting discoveries`;
+- Show genuine enthusiasm for interesting discoveries`
 
   const academicUserPrompt = `Create a comprehensive summary of findings from these ${papers.length} research papers on "${topic}". Focus on synthesizing the key insights, patterns, and important discoveries across all papers.
 
 ${papersContext}
 
-Create an engaging summary that helps readers understand the current state of research on ${topic}.`;
+Create an engaging summary that helps readers understand the current state of research on ${topic}.`
 
   const casualUserPrompt = `Hey! I've got ${papers.length} research papers here about "${topic}", and I'd love your help making sense of what they're saying. Can you read through them and give me a friendly rundown of the key stuff researchers are finding?
 
 ${papersContext}
 
-Give me the highlights in a way that's easy to follow - what's the big picture on ${topic} right now?`;
+Give me the highlights in a way that's easy to follow - what's the big picture on ${topic} right now?`
 
-  const systemPrompt = tone === 'academic' ? academicSystemPrompt : casualSystemPrompt;
-  const userPrompt = tone === 'academic' ? academicUserPrompt : casualUserPrompt;
+  const systemPrompt =
+    tone === "academic" ? academicSystemPrompt : casualSystemPrompt
+  const userPrompt = tone === "academic" ? academicUserPrompt : casualUserPrompt
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -125,31 +110,33 @@ Give me the highlights in a way that's easy to follow - what's the big picture o
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: tone === 'casual' ? 0.8 : 0.7,
+        temperature: tone === "casual" ? 0.8 : 0.7,
         max_tokens: 800,
       }),
-    });
+    })
 
     if (!response.ok) {
-      throw new Error("OpenAI API request failed");
+      throw new Error("OpenAI API request failed")
     }
 
-    const data = await response.json();
-    return data.choices[0].message.content;
+    const data = await response.json()
+    return data.choices[0].message.content
   } catch (error) {
-    console.error("Error generating AI summary:", error);
-    return `Research on ${topic} is actively being studied across multiple dimensions. While we've gathered ${papers.length} significant papers on this topic, the AI summary is temporarily unavailable. Please check the references below to explore the research directly.`;
+    console.error("Error generating AI summary:", error)
+    return `Research on ${topic} is actively being studied across multiple dimensions. While we've gathered ${papers.length} significant papers on this topic, the AI summary is temporarily unavailable. Please check the references below to explore the research directly.`
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const tone = (searchParams.get('tone') || 'academic') as 'academic' | 'casual';
-    const today = getTodayDateString();
+    const searchParams = request.nextUrl.searchParams
+    const tone = (searchParams.get("tone") || "academic") as
+      | "academic"
+      | "casual"
+    const today = getTodayDateString()
 
     if (cachedTopic && cachedTopic.date === today && cachedTopic[tone]) {
-      return NextResponse.json(cachedTopic[tone]);
+      return NextResponse.json(cachedTopic[tone])
     }
 
     const topics = [
@@ -163,24 +150,24 @@ export async function GET(request: NextRequest) {
       "environmental pollution",
       "sustainable urban planning",
       "water conservation",
-    ];
+    ]
 
-    const topicIndex = hashDateToTopicIndex(today) % topics.length;
-    const selectedTopic = topics[topicIndex];
+    const topicIndex = hashDateToTopicIndex(today) % topics.length
+    const selectedTopic = topics[topicIndex]
 
-    const searchUrl = `https://api.openalex.org/works?filter=title_and_abstract.search:${encodeURIComponent(selectedTopic)},type:article,from_publication_date:2020-01-01&sort=cited_by_count:desc&per_page=7`;
+    const searchUrl = `https://api.openalex.org/works?filter=title_and_abstract.search:${encodeURIComponent(selectedTopic)},type:article,from_publication_date:2020-01-01&sort=cited_by_count:desc&per_page=7`
 
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "EcoLearn-Daily (mailto:research@example.com)",
       },
-    });
+    })
 
     if (!response.ok) {
-      throw new Error("OpenAlex API request failed");
+      throw new Error("OpenAlex API request failed")
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
     if (!data.results || data.results.length === 0) {
       const fallbackData = {
@@ -188,40 +175,44 @@ export async function GET(request: NextRequest) {
         summary:
           "Today's research is still being fetched. Check back soon for an AI-generated summary of recent sustainability research.",
         references: [],
-      };
+      }
 
       if (!cachedTopic || cachedTopic.date !== today) {
-        cachedTopic = { academic: fallbackData, casual: fallbackData, date: today };
+        cachedTopic = {
+          academic: fallbackData,
+          casual: fallbackData,
+          date: today,
+        }
       }
-      return NextResponse.json(fallbackData);
+      return NextResponse.json(fallbackData)
     }
 
-    const papers: Reference[] = [];
-    const abstracts: string[] = [];
+    const papers: Reference[] = []
+    const abstracts: string[] = []
 
     for (const work of data.results.slice(0, 7)) {
-      const abstract = reconstructAbstract(work.abstract_inverted_index);
+      const abstract = reconstructAbstract(work.abstract_inverted_index)
       if (abstract) {
         const authors =
           work.authorships
             ?.slice(0, 3)
-            .map((a: any) => a.author.display_name) || [];
+            .map((a: any) => a.author.display_name) || []
         const url =
           work.primary_location?.landing_page_url ||
           (work.doi
             ? `https://doi.org/${work.doi.replace("https://doi.org/", "")}`
-            : null);
+            : null)
 
         papers.push({
           title: work.title || "Untitled Research Paper",
           authors,
           year: work.publication_year || new Date().getFullYear(),
           url,
-        });
-        abstracts.push(abstract);
+        })
+        abstracts.push(abstract)
       }
 
-      if (papers.length >= 5) break;
+      if (papers.length >= 5) break
     }
 
     if (papers.length === 0) {
@@ -230,43 +221,52 @@ export async function GET(request: NextRequest) {
         summary:
           "Research papers on this topic are being processed. Check back soon for insights.",
         references: [],
-      };
+      }
 
       if (!cachedTopic || cachedTopic.date !== today) {
-        cachedTopic = { academic: fallbackData, casual: fallbackData, date: today };
+        cachedTopic = {
+          academic: fallbackData,
+          casual: fallbackData,
+          date: today,
+        }
       }
-      return NextResponse.json(fallbackData);
+      return NextResponse.json(fallbackData)
     }
 
-    const summary = await generateAISummary(selectedTopic, papers, abstracts, tone);
+    const summary = await generateAISummary(
+      selectedTopic,
+      papers,
+      abstracts,
+      tone
+    )
 
     const topicData = {
       topic: selectedTopic,
       summary,
       references: papers,
-    };
+    }
 
     if (!cachedTopic || cachedTopic.date !== today) {
       cachedTopic = {
-        academic: tone === 'academic' ? topicData : null,
-        casual: tone === 'casual' ? topicData : null,
+        academic: tone === "academic" ? topicData : null,
+        casual: tone === "casual" ? topicData : null,
         date: today,
-      };
+      }
     } else {
-      cachedTopic[tone] = topicData;
+      cachedTopic[tone] = topicData
     }
 
-    return NextResponse.json(topicData);
+    return NextResponse.json(topicData)
   } catch (error) {
-    console.error("Error fetching topic:", error);
+    console.error("Error fetching topic:", error)
 
     const fallbackData = {
       topic: "sustainability research",
       summary:
         "Today's research summary is being prepared. Check back soon to explore the latest findings.",
       references: [],
-    };
+    }
 
-    return NextResponse.json(fallbackData);
+    return NextResponse.json(fallbackData)
   }
 }

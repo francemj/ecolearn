@@ -1,14 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap");
+@import "tailwindcss";
+@config "./../tailwind.config.ts";
 
 @layer base {
   body {
     @apply font-serif text-gray-800 dark:text-gray-200;
   }
-  
+
   :root {
     --dark-slate: #161d23;
     --dark-teal: #0f444c;
@@ -22,7 +20,7 @@
   .fade-in {
     animation: fadeIn 0.8s ease-in;
   }
-  
+
   @keyframes fadeIn {
     from {
       opacity: 0;

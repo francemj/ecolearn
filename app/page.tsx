@@ -1,73 +1,69 @@
-'use client';
+"use client"
 
-import { useEffect, useState, useCallback } from 'react';
-import TopicCard from './components/TopicCard';
-import Chat from './components/Chat';
-import DarkModeToggle from './components/DarkModeToggle';
-import ToneToggle, { Tone } from './components/ToneToggle';
+import { useState, useCallback } from "react"
+import TopicCard from "./components/TopicCard"
+import Chat from "./components/Chat"
+import DarkModeToggle from "./components/DarkModeToggle"
+import ToneToggle, { Tone } from "./components/ToneToggle"
 
 interface Reference {
-  title: string;
-  authors: string[];
-  year: number;
-  url: string | null;
+  title: string
+  authors: string[]
+  year: number
+  url: string | null
 }
 
 interface Topic {
-  topic: string;
-  summary: string;
-  references: Reference[];
+  topic: string
+  summary: string
+  references: Reference[]
 }
 
 export default function Home() {
-  const [topic, setTopic] = useState<Topic | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [tone, setTone] = useState<Tone>('academic');
+  const [topic, setTopic] = useState<Topic | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [tone, setTone] = useState<Tone>("academic")
 
   const fetchTopic = useCallback(async (currentTone: Tone) => {
     try {
-      setLoading(true);
-      const response = await fetch(`/api/topic?tone=${currentTone}`);
-      const data = await response.json();
-      setTopic(data);
+      setLoading(true)
+      const response = await fetch(`/api/topic?tone=${currentTone}`)
+      const data = await response.json()
+      setTopic(data)
     } catch (error) {
-      console.error('Error fetching topic:', error);
+      console.error("Error fetching topic:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
-  useEffect(() => {
-    const savedTone = (localStorage.getItem('tone') as Tone) || 'academic';
-    setTone(savedTone);
-    fetchTopic(savedTone);
-  }, [fetchTopic]);
-
-  const handleToneChange = (newTone: Tone) => {
-    setTone(newTone);
-    fetchTopic(newTone);
-  };
+  const handleToneChange = useCallback(
+    (newTone: Tone) => {
+      setTone(newTone)
+      fetchTopic(newTone)
+    },
+    [fetchTopic]
+  )
 
   return (
     <main className="min-h-screen py-12 px-4 transition-colors duration-300 bg-gradient-to-b from-white to-sage-light dark:from-gray-900 dark:to-dark-slate">
       <DarkModeToggle />
       <ToneToggle onToneChange={handleToneChange} />
-      
+
       <div className="max-w-4xl mx-auto">
         <header className="mb-12 text-center fade-in">
           <h1 className="text-5xl md:text-6xl font-light mb-4 bg-gradient-to-r from-dark-teal via-dark-green to-sage-green dark:from-sage-green dark:via-sage-light dark:to-sage-green bg-clip-text text-transparent">
             EcoLearn Daily
           </h1>
           <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg">
-            AI-powered insights from multiple sustainability research papers, daily.
+            AI-powered insights from multiple sustainability research papers,
+            daily.
           </p>
         </header>
 
         <TopicCard topic={topic} loading={loading} />
 
-        {topic && !loading && (
-          <Chat topicContext={topic} tone={tone} />
-        )}
+        {topic && !loading && <Chat topicContext={topic} tone={tone} />}
 
         <footer className="mt-16 pt-8 border-t border-sage-green/30 dark:border-sage-green/50 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -76,5 +72,5 @@ export default function Home() {
         </footer>
       </div>
     </main>
-  );
+  )
 }
