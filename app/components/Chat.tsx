@@ -130,8 +130,8 @@ export default function Chat({ topicContext }: ChatProps) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg p-6 fade-in border border-purple-100 dark:border-purple-900">
-      <h3 className="text-xl font-light mb-4 text-purple-900 dark:text-purple-100">
+    <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-6 fade-in border border-sage-green/30 dark:border-sage-green/50">
+      <h3 className="text-xl font-light mb-4 text-dark-green dark:text-sage-light">
         Discuss this research
       </h3>
 
@@ -147,11 +147,11 @@ export default function Chat({ topicContext }: ChatProps) {
             key={idx}
             className={`p-4 rounded ${
               msg.role === 'user'
-                ? 'bg-white dark:bg-gray-700 ml-8 border border-purple-200 dark:border-purple-800'
-                : 'bg-purple-100 dark:bg-gray-900 mr-8 border border-purple-200 dark:border-purple-800'
+                ? 'bg-white dark:bg-gray-700 ml-8 border border-sage-green/30 dark:border-sage-green/50'
+                : 'bg-sage-light/30 dark:bg-gray-900 mr-8 border border-sage-green/30 dark:border-sage-green/50'
             }`}
           >
-            <p className="text-xs text-purple-600 dark:text-purple-400 mb-1 font-medium">
+            <p className="text-xs text-sage-green dark:text-sage-light mb-1 font-medium">
               {msg.role === 'user' ? 'You' : 'Assistant'}
             </p>
             <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
@@ -169,12 +169,12 @@ export default function Chat({ topicContext }: ChatProps) {
           onChange={(e) => setInput(e.target.value)}
           placeholder="What are the key findings on this topic?"
           disabled={isLoading}
-          className="flex-1 px-4 py-3 rounded-lg border border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 disabled:opacity-50"
+          className="flex-1 px-4 py-3 rounded-lg border border-sage-green/30 dark:border-sage-green/50 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sage-green dark:focus:ring-sage-light disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+          className="px-6 py-3 bg-gradient-to-r from-dark-teal to-dark-green text-white rounded-lg hover:from-dark-green hover:to-sage-green disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
         >
           {isLoading ? 'Thinking...' : 'Ask'}
         </button>

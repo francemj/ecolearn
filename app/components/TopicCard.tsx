@@ -19,13 +19,13 @@ interface TopicCardProps {
 export default function TopicCard({ topic, loading }: TopicCardProps) {
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-purple-100 dark:border-purple-900">
+      <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-sage-green/30 dark:border-sage-green/50">
         <div className="animate-pulse">
-          <div className="h-6 bg-purple-200 dark:bg-gray-700 rounded w-48 mb-6"></div>
-          <div className="h-4 bg-purple-100 dark:bg-gray-700 rounded w-full mb-3"></div>
-          <div className="h-4 bg-purple-100 dark:bg-gray-700 rounded w-full mb-3"></div>
-          <div className="h-4 bg-purple-100 dark:bg-gray-700 rounded w-3/4 mb-6"></div>
-          <div className="h-4 bg-purple-100 dark:bg-gray-700 rounded w-2/3"></div>
+          <div className="h-6 bg-sage-green/20 dark:bg-gray-700 rounded w-48 mb-6"></div>
+          <div className="h-4 bg-sage-green/20 dark:bg-gray-700 rounded w-full mb-3"></div>
+          <div className="h-4 bg-sage-green/20 dark:bg-gray-700 rounded w-full mb-3"></div>
+          <div className="h-4 bg-sage-green/20 dark:bg-gray-700 rounded w-3/4 mb-6"></div>
+          <div className="h-4 bg-sage-green/20 dark:bg-gray-700 rounded w-2/3"></div>
         </div>
       </div>
     );
@@ -33,7 +33,7 @@ export default function TopicCard({ topic, loading }: TopicCardProps) {
 
   if (!topic) {
     return (
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-purple-100 dark:border-purple-900">
+      <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-sage-green/30 dark:border-sage-green/50">
         <p className="text-gray-600 dark:text-gray-400">
           Unable to load today&apos;s research summary. Please try again later.
         </p>
@@ -42,12 +42,12 @@ export default function TopicCard({ topic, loading }: TopicCardProps) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-purple-100 dark:border-purple-900">
+    <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-sage-green/30 dark:border-sage-green/50">
       <div className="mb-6">
-        <div className="inline-block px-4 py-1 bg-purple-600 text-white text-sm rounded-full mb-4">
+        <div className="inline-block px-4 py-1 bg-gradient-to-r from-dark-teal to-dark-green text-white text-sm rounded-full mb-4">
           Today&apos;s Topic
         </div>
-        <h2 className="text-3xl md:text-4xl font-light capitalize leading-relaxed text-purple-900 dark:text-purple-100 mb-6">
+        <h2 className="text-3xl md:text-4xl font-light capitalize leading-relaxed text-dark-teal dark:text-sage-light mb-6">
           {topic.topic}
         </h2>
       </div>
@@ -59,15 +59,15 @@ export default function TopicCard({ topic, loading }: TopicCardProps) {
       </div>
 
       {topic.references && topic.references.length > 0 && (
-        <div className="border-t border-purple-200 dark:border-purple-800 pt-6">
-          <h3 className="text-xl font-light text-purple-900 dark:text-purple-100 mb-4">
+        <div className="border-t border-sage-green/30 dark:border-sage-green/50 pt-6">
+          <h3 className="text-xl font-light text-dark-green dark:text-sage-light mb-4">
             References ({topic.references.length} papers)
           </h3>
           <div className="space-y-4">
             {topic.references.map((ref, idx) => (
               <div
                 key={idx}
-                className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-100 dark:border-purple-900 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-sage-green/30 dark:border-sage-green/50 hover:border-sage-green dark:hover:border-sage-green transition-colors"
               >
                 <h4 className="font-normal text-gray-900 dark:text-gray-100 mb-2">
                   {idx + 1}. {ref.title}
@@ -89,7 +89,7 @@ export default function TopicCard({ topic, loading }: TopicCardProps) {
                     href={ref.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 underline underline-offset-4 transition-colors"
+                    className="inline-block text-sm text-dark-teal dark:text-sage-green hover:text-dark-green dark:hover:text-sage-light underline underline-offset-4 transition-colors"
                   >
                     Read full paper →
                   </a>

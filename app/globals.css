@@ -10,11 +10,11 @@
   }
   
   :root {
-    --deep-purple: #0d0b33;
-    --dark-purple: #4c2f6f;
-    --medium-purple: #52489f;
-    --pink-accent: #c266a7;
-    --lavender-light: #e7c8e7;
+    --dark-slate: #161d23;
+    --dark-teal: #0f444c;
+    --dark-green: #114538;
+    --sage-green: #5e8d83;
+    --sage-light: #d2e1cc;
   }
 }
 
