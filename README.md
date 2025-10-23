@@ -1,6 +1,6 @@
 # EcoLearn Daily
 
-A vibrant, AI-powered web application for exploring sustainability research through daily synthesized insights.
+A calm, AI-powered web application for exploring sustainability research through daily synthesized insights.
 
 ## Overview
 
@@ -15,35 +15,33 @@ EcoLearn Daily transforms how you engage with environmental research. Instead of
 - **References Section**: Every summary includes links to all source papers with author information
 - **Interactive Chat**: Ask follow-up questions about the research using AI assistance
 - **Environmental Impact Tracking**: See the energy usage and CO₂ emissions of your conversations
-- **Vibrant Design**: Purple and pink gradients (#0d0b33, #4c2f6f, #52489f, #c266a7, #e7c8e7) with calm serif typography
+- **Calm Design**: Natural green and teal color palette (#161d23, #0f444c, #114538, #5e8d83, #d2e1cc) with serif typography
 - **Dark Mode**: Beautiful dark theme with smooth transitions
 - **24-Hour Caching**: Ensures consistent daily content and respects API limits
 - **Responsive**: Works seamlessly on desktop and mobile
 
 ## Setup Instructions
 
-### 1. Add Your OpenAI API Key
+### 1. Add Your OpenAI API Key to Replit Secrets
 
 The app requires an OpenAI API key for both summary generation and chat functionality.
 
-1. Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
+1. In Replit, open the **Secrets** tab (🔒 icon in the sidebar)
+2. Click **"Add a new secret"**
+3. Set the key name to: `OPENAI_API_KEY`
+4. Paste your OpenAI API key as the value
+5. Click **"Add Secret"**
 
-2. Get your OpenAI API key:
-   - Visit https://platform.openai.com/api-keys
-   - Create a new API key
-   - Copy the key
+To get your OpenAI API key:
+- Visit https://platform.openai.com/api-keys
+- Create a new API key
+- Copy the key
 
-3. Add your key to the `.env` file:
-   ```
-   OPENAI_API_KEY=your-actual-openai-key-here
-   ```
-
-**Important**: Without an API key, the app will show placeholder content. The AI summary generation and chat features require a valid key.
+**Important**: The app uses Replit Secrets for secure API key management. The key is automatically available to your application through environment variables.
 
 ### 2. Run the Development Server
+
+The server should already be running! If not, you can start it with:
 
 ```bash
 npm run dev
@@ -110,18 +108,18 @@ This transparency helps users understand the environmental cost of AI interactio
 
 - **Next.js 14** (App Router, Edge Runtime)
 - **TypeScript**
-- **TailwindCSS** with custom purple/pink palette
+- **TailwindCSS** with custom green/teal palette
 - **React**
 - **OpenAI API** (GPT-4 Turbo for summaries and chat)
 - **OpenAlex API** (academic paper database)
 
 ## Color Palette
 
-- **Deep Purple**: #0d0b33 - Primary dark accent
-- **Dark Purple**: #4c2f6f - Secondary dark tone
-- **Medium Purple**: #52489f - Interactive elements
-- **Pink Accent**: #c266a7 - Highlights and gradients
-- **Lavender Light**: #e7c8e7 - Soft backgrounds
+- **Dark Slate**: #161d23 - Primary dark accent
+- **Dark Teal**: #0f444c - Deep teal tones
+- **Dark Green**: #114538 - Forest green accents
+- **Sage Green**: #5e8d83 - Medium natural green
+- **Sage Light**: #d2e1cc - Soft natural background
 
 ## Available Scripts
 
@@ -175,7 +173,7 @@ Interactive chat about the research topic.
 ## Design Principles
 
 - **AI-Powered Learning**: Leverage AI to make research more accessible
-- **Visual Appeal**: Vibrant colors that inspire engagement without distraction
+- **Natural Aesthetics**: Calm green/teal palette inspired by nature
 - **Transparency**: Show environmental costs of AI usage
 - **Mindfulness**: Calm pace, no pressure to engage constantly
 - **Accessibility**: Clear typography, high contrast, keyboard navigation
