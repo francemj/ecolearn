@@ -16,8 +16,8 @@ export default function ImpactCounter({ totalTokens }: ImpactCounterProps) {
   }
 
   return (
-    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 fade-in">
-      <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+    <div className="mt-6 pt-4 border-t border-purple-200 dark:border-purple-700 fade-in">
+      <p className="text-xs text-purple-600 dark:text-purple-400 text-center">
         This conversation has used about {energyUsed.toFixed(2)} Wh (~{co2Emissions.toFixed(2)} g CO₂)
       </p>
     </div>

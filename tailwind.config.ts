@@ -12,6 +12,13 @@ const config: Config = {
       fontFamily: {
         serif: ["Merriweather", "Georgia", "serif"],
       },
+      colors: {
+        'deep-purple': '#0d0b33',
+        'dark-purple': '#4c2f6f',
+        'medium-purple': '#52489f',
+        'pink-accent': '#c266a7',
+        'lavender-light': '#e7c8e7',
+      },
     },
   },
   plugins: [],

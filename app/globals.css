@@ -6,19 +6,27 @@
 
 @layer base {
   body {
-    @apply font-serif text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900;
+    @apply font-serif text-gray-800 dark:text-gray-200;
+  }
+  
+  :root {
+    --deep-purple: #0d0b33;
+    --dark-purple: #4c2f6f;
+    --medium-purple: #52489f;
+    --pink-accent: #c266a7;
+    --lavender-light: #e7c8e7;
   }
 }
 
 @layer utilities {
   .fade-in {
-    animation: fadeIn 0.6s ease-in;
+    animation: fadeIn 0.8s ease-in;
   }
   
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(15px);
     }
     to {
       opacity: 1;
