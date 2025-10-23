@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 interface OpenAlexWork {
   id: string;
   title: string;
@@ -14,6 +16,13 @@ interface OpenAlexWork {
     landing_page_url?: string;
   };
   doi?: string;
+}
+
+interface Reference {
+  title: string;
+  authors: string[];
+  year: number;
+  url: string | null;
 }
 
 let cachedTopic: {
@@ -49,6 +58,63 @@ function reconstructAbstract(invertedIndex?: Record<string, number[]>): string {
   return words.map(w => w[0]).join(' ');
 }
 
+async function generateAISummary(topic: string, papers: Reference[], abstracts: string[]): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  
+  if (!apiKey) {
+    return `Today's topic is ${topic}. Multiple research papers on this topic have been gathered, but AI summary generation is unavailable. Add your OpenAI key to enable AI-powered summaries.`;
+  }
+
+  const papersContext = papers.map((paper, idx) => 
+    `Paper ${idx + 1}: "${paper.title}" (${paper.year})
+Authors: ${paper.authors.join(', ')}
+Abstract: ${abstracts[idx]}`
+  ).join('\n\n');
+
+  const systemPrompt = `You are a research synthesizer that creates clear, accessible summaries of multiple academic papers on environmental topics. Your summaries should:
+- Be calm, factual, and engaging
+- Highlight key findings and consensus across papers
+- Note any important disagreements or gaps
+- Use accessible language for non-experts
+- Be 3-4 paragraphs long
+- Focus on what we know and what matters`;
+
+  const userPrompt = `Create a comprehensive summary of findings from these ${papers.length} research papers on "${topic}". Focus on synthesizing the key insights, patterns, and important discoveries across all papers.
+
+${papersContext}
+
+Create an engaging summary that helps readers understand the current state of research on ${topic}.`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('OpenAI API request failed');
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('Error generating AI summary:', error);
+    return `Research on ${topic} is actively being studied across multiple dimensions. While we've gathered ${papers.length} significant papers on this topic, the AI summary is temporarily unavailable. Please check the references below to explore the research directly.`;
+  }
+}
+
 export async function GET() {
   try {
     const today = getTodayDateString();
@@ -73,7 +139,7 @@ export async function GET() {
     const topicIndex = hashDateToTopicIndex(today) % topics.length;
     const selectedTopic = topics[topicIndex];
     
-    const searchUrl = `https://api.openalex.org/works?filter=title_and_abstract.search:${encodeURIComponent(selectedTopic)},type:article,from_publication_date:2020-01-01&sort=cited_by_count:desc&per_page=10`;
+    const searchUrl = `https://api.openalex.org/works?filter=title_and_abstract.search:${encodeURIComponent(selectedTopic)},type:article,from_publication_date:2020-01-01&sort=cited_by_count:desc&per_page=7`;
     
     const response = await fetch(searchUrl, {
       headers: {
@@ -89,31 +155,54 @@ export async function GET() {
     
     if (!data.results || data.results.length === 0) {
       const fallbackData = {
-        title: "Today's research is still being fetched",
-        abstract: "Check back soon for today's sustainability research paper.",
-        authors: [],
-        year: new Date().getFullYear(),
-        url: null,
+        topic: selectedTopic,
+        summary: "Today's research is still being fetched. Check back soon for an AI-generated summary of recent sustainability research.",
+        references: [],
       };
       
       cachedTopic = { data: fallbackData, date: today };
       return NextResponse.json(fallbackData);
     }
 
-    const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-    const paperIndex = dayOfYear % Math.min(data.results.length, 10);
-    const work: OpenAlexWork = data.results[paperIndex];
+    const papers: Reference[] = [];
+    const abstracts: string[] = [];
 
-    const abstract = reconstructAbstract(work.abstract_inverted_index);
-    const authors = work.authorships?.slice(0, 5).map(a => a.author.display_name) || [];
-    const url = work.primary_location?.landing_page_url || (work.doi ? `https://doi.org/${work.doi.replace('https://doi.org/', '')}` : null);
+    for (const work of data.results.slice(0, 7)) {
+      const abstract = reconstructAbstract(work.abstract_inverted_index);
+      if (abstract) {
+        const authors = work.authorships?.slice(0, 3).map((a: any) => a.author.display_name) || [];
+        const url = work.primary_location?.landing_page_url || 
+                   (work.doi ? `https://doi.org/${work.doi.replace('https://doi.org/', '')}` : null);
+        
+        papers.push({
+          title: work.title || 'Untitled Research Paper',
+          authors,
+          year: work.publication_year || new Date().getFullYear(),
+          url,
+        });
+        abstracts.push(abstract);
+      }
+
+      if (papers.length >= 5) break;
+    }
+
+    if (papers.length === 0) {
+      const fallbackData = {
+        topic: selectedTopic,
+        summary: "Research papers on this topic are being processed. Check back soon for insights.",
+        references: [],
+      };
+      
+      cachedTopic = { data: fallbackData, date: today };
+      return NextResponse.json(fallbackData);
+    }
+
+    const summary = await generateAISummary(selectedTopic, papers, abstracts);
 
     const topicData = {
-      title: work.title || 'Untitled Research Paper',
-      abstract: abstract || 'Abstract not available.',
-      authors,
-      year: work.publication_year || new Date().getFullYear(),
-      url,
+      topic: selectedTopic,
+      summary,
+      references: papers,
     };
 
     cachedTopic = { data: topicData, date: today };
@@ -123,11 +212,9 @@ export async function GET() {
     console.error('Error fetching topic:', error);
     
     const fallbackData = {
-      title: "Today's research is still being fetched",
-      abstract: "Check back soon for today's sustainability research paper.",
-      authors: [],
-      year: new Date().getFullYear(),
-      url: null,
+      topic: 'sustainability research',
+      summary: "Today's research summary is being prepared. Check back soon to explore the latest findings.",
+      references: [],
     };
     
     return NextResponse.json(fallbackData);
