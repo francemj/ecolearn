@@ -15,6 +15,8 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
   - Updated color scheme to vibrant purple/pink palette (#0d0b33, #4c2f6f, #52489f, #c266a7, #e7c8e7)
   - Updated chat system to work with topic context and multiple papers
   - Enhanced error handling with graceful fallbacks throughout
+  - Switched to calm green/teal palette (#161d23, #0f444c, #114538, #5e8d83, #d2e1cc)
+  - Configured to use OpenAI API key from Replit Secrets
   
 - **2025-10-22**: Initial project setup
   - Next.js 14 with App Router and TypeScript
@@ -37,8 +39,8 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
     TopicCard.tsx        - Displays AI summary with references section
     Chat.tsx             - Chat interface with message streaming
     ImpactCounter.tsx    - Shows environmental cost of conversations
-    DarkModeToggle.tsx   - Theme switcher with purple gradient
-  globals.css            - TailwindCSS styles with custom purple/pink palette
+    DarkModeToggle.tsx   - Theme switcher with green gradient
+  globals.css            - TailwindCSS styles with custom green/teal palette
   layout.tsx             - Root layout with metadata
   page.tsx               - Main page component
 ```
@@ -52,18 +54,19 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
 5. **24-Hour Caching**: Prevents API rate limits and ensures consistent daily content
 6. **Interactive Chat**: Ask questions about the synthesized research with full context
 7. **Impact Counter**: Estimates energy (Wh) and CO₂ emissions (0.25 Wh per 1000 tokens, 0.4g CO₂ per Wh)
-8. **Vibrant Design**: Purple and pink color palette with gradients and modern aesthetics
+8. **Calm Design**: Green and teal color palette with natural, soothing aesthetics
 9. **Dark Mode**: Beautiful dark theme with seamless transitions
 
 ### Environment Variables
 
-- `OPENAI_API_KEY`: Required for AI summary generation and chat functionality (user must provide their own key)
+- `OPENAI_API_KEY`: Required for AI summary generation and chat functionality (configured via Replit Secrets)
 
 ## Setup Instructions
 
-1. Add your OpenAI API key:
-   - Copy `.env.example` to `.env`
-   - Add your OpenAI API key to the `OPENAI_API_KEY` variable
+1. Add your OpenAI API key to Replit Secrets:
+   - Open the "Secrets" tab in Replit
+   - Add a new secret with key `OPENAI_API_KEY`
+   - Paste your OpenAI API key as the value
 
 2. Run the development server:
    ```bash
@@ -75,7 +78,7 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
 ## Design Philosophy
 
 - **AI-Enhanced Learning**: Use AI to make research more accessible and digestible
-- **Visual Appeal**: Vibrant purple/pink palette that's engaging without being distracting
+- **Natural Aesthetics**: Calm green/teal palette inspired by nature
 - **No ads, gamification, or notifications**
 - **Calm, factual, mindful experience**
 - **Focused on learning, not engagement metrics**
@@ -83,16 +86,16 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
 
 ## Color Palette
 
-- **Deep Purple** (#0d0b33): Primary dark accent
-- **Dark Purple** (#4c2f6f): Secondary dark tone
-- **Medium Purple** (#52489f): Interactive elements
-- **Pink Accent** (#c266a7): Highlights and gradients
-- **Lavender Light** (#e7c8e7): Soft backgrounds
+- **Dark Slate** (#161d23): Primary dark accent
+- **Dark Teal** (#0f444c): Deep teal tones
+- **Dark Green** (#114538): Forest green accents
+- **Sage Green** (#5e8d83): Medium natural green
+- **Sage Light** (#d2e1cc): Soft natural background
 
 ## API Usage
 
 - **OpenAlex API**: Primary data source for research papers (no API key required)
-- **OpenAI API**: Powers AI summary generation and chat interface (requires user's own API key)
+- **OpenAI API**: Powers AI summary generation and chat interface (requires API key via Replit Secrets)
 
 ## Future Enhancements
 
