@@ -1,28 +1,30 @@
 # EcoLearn Daily
 
-A calm, minimalist web application for exploring sustainability research, one paper at a time.
+A vibrant, AI-powered web application for exploring sustainability research through daily synthesized insights.
 
 ## Overview
 
-EcoLearn Daily is designed to provide a quiet, mindful learning experience focused on environmental research. Each day, all users see the same sustainability-focused research paper fetched from the OpenAlex API. The app includes an AI-powered chat interface to ask questions about the daily research and displays environmental impact metrics for each conversation.
+EcoLearn Daily transforms how you engage with environmental research. Instead of reading individual papers, you receive AI-generated summaries that synthesize findings from multiple recent studies on a single sustainability topic. Each day, all users explore the same topic together, fostering a shared learning experience.
 
 **Design Philosophy**: Built to learn, not to keep you hooked. No ads, gamification, notifications, or tracking.
 
 ## Features
 
-- **Daily Research Paper**: Automatically fetches one sustainability paper per day using date-based hashing, ensuring all users see the same content
-- **24-Hour Caching**: Prevents API rate limits while keeping content fresh daily
-- **AI Chat Interface**: Ask questions about the research using OpenAI's GPT-4 Turbo with streaming responses
-- **Environmental Impact Counter**: Tracks and displays the estimated energy usage (Wh) and CO₂ emissions of your conversations
-- **Calm Design**: Serif typography (Merriweather), soft color palette, generous spacing, and gentle fade-in animations
-- **Dark Mode**: Optional dark theme with seamless transitions
-- **Responsive**: Works beautifully on desktop and mobile devices
+- **AI-Powered Summaries**: Fetches 5-7 recent research papers and uses GPT-4 Turbo to create comprehensive, accessible summaries
+- **Daily Topics**: Automatically selects from 10 sustainability themes using date-based hashing
+- **References Section**: Every summary includes links to all source papers with author information
+- **Interactive Chat**: Ask follow-up questions about the research using AI assistance
+- **Environmental Impact Tracking**: See the energy usage and CO₂ emissions of your conversations
+- **Vibrant Design**: Purple and pink gradients (#0d0b33, #4c2f6f, #52489f, #c266a7, #e7c8e7) with calm serif typography
+- **Dark Mode**: Beautiful dark theme with smooth transitions
+- **24-Hour Caching**: Ensures consistent daily content and respects API limits
+- **Responsive**: Works seamlessly on desktop and mobile
 
 ## Setup Instructions
 
 ### 1. Add Your OpenAI API Key
 
-The chat functionality requires an OpenAI API key. To set it up:
+The app requires an OpenAI API key for both summary generation and chat functionality.
 
 1. Copy the example environment file:
    ```bash
@@ -39,7 +41,7 @@ The chat functionality requires an OpenAI API key. To set it up:
    OPENAI_API_KEY=your-actual-openai-key-here
    ```
 
-**Note**: Without an API key, the app will still display daily research papers, but the chat feature will show: "Chat unavailable — add your OpenAI key in .env to enable responses."
+**Important**: Without an API key, the app will show placeholder content. The AI summary generation and chat features require a valid key.
 
 ### 2. Run the Development Server
 
@@ -49,52 +51,35 @@ npm run dev
 
 The app will be available at http://localhost:5000
 
-### 3. Test the API (Optional)
+### 3. Explore Today's Research
 
-You can test the topic API directly in the browser console:
-
-```javascript
-fetch('/api/topic')
-  .then(res => res.json())
-  .then(data => console.log(data));
-```
-
-This should return today's research paper with title, abstract, authors, year, and URL.
-
-## Project Structure
-
-```
-/app
-  /api
-    /topic/route.ts         - Fetches daily sustainability papers from OpenAlex
-    /chat/route.ts          - Handles AI chat with streaming responses
-  /components
-    TopicCard.tsx           - Displays research paper details
-    Chat.tsx                - Chat interface with message streaming
-    ImpactCounter.tsx       - Shows environmental cost of conversations
-    DarkModeToggle.tsx      - Theme switcher
-  globals.css               - TailwindCSS styles and animations
-  layout.tsx                - Root layout with metadata
-  page.tsx                  - Main page component
-```
+Visit the homepage to see:
+- Today's sustainability topic
+- An AI-generated summary of recent findings
+- References to all source papers
+- An interactive chat to explore the research
 
 ## How It Works
 
 ### Daily Topic Selection
 
-1. The app hashes today's date to generate a consistent number
-2. This number selects one of 10 sustainability topics (climate change, renewable energy, etc.)
-3. The OpenAlex API is queried for highly-cited research papers on that topic
-4. A specific paper is selected based on the day of the year
-5. The result is cached for 24 hours to avoid excessive API calls
+1. The app hashes today's date to consistently select one of 10 sustainability topics
+2. Topics include: climate change, renewable energy, sustainable agriculture, ocean conservation, biodiversity, circular economy, carbon sequestration, pollution, urban planning, and water conservation
+3. All users worldwide see the same topic each day
 
-### AI Chat
+### AI Summary Generation
 
-1. Users can ask questions about the daily research paper
-2. Messages are sent to the OpenAI API with a system prompt that ensures calm, factual responses
-3. The paper's context (title, abstract, authors) is included in every request
-4. Responses stream back in real-time for a smooth experience
-5. Token usage is estimated and converted to environmental metrics
+1. **Paper Retrieval**: Queries OpenAlex API for 5-7 highly-cited papers on the selected topic (published 2020+)
+2. **AI Synthesis**: Sends paper abstracts to GPT-4 Turbo with instructions to create an accessible, comprehensive summary
+3. **Quality Focus**: Highlights key findings, consensus, disagreements, and knowledge gaps
+4. **Caching**: Result is cached for 24 hours to ensure consistency and efficiency
+
+### Interactive Chat
+
+1. Users can ask questions about the research topic
+2. The AI assistant has full context of the summary and all source papers
+3. Responses are factual, grounded in the research, and avoid speculation
+4. Token usage is tracked and converted to environmental metrics
 
 ### Environmental Impact
 
@@ -102,16 +87,41 @@ The impact counter estimates:
 - **Energy**: 0.25 Wh per 1,000 tokens
 - **CO₂**: 0.4 g per Wh
 
-This helps users understand the environmental cost of AI interactions in a subtle, non-judgmental way.
+This transparency helps users understand the environmental cost of AI interactions.
+
+## Project Structure
+
+```
+/app
+  /api
+    /topic/route.ts         - Fetches papers and generates AI summaries
+    /chat/route.ts          - Handles interactive chat with streaming
+  /components
+    TopicCard.tsx           - Displays AI summary with references
+    Chat.tsx                - Chat interface with message streaming
+    ImpactCounter.tsx       - Shows environmental cost
+    DarkModeToggle.tsx      - Theme switcher
+  globals.css               - TailwindCSS styles with custom colors
+  layout.tsx                - Root layout
+  page.tsx                  - Main page component
+```
 
 ## Technologies Used
 
-- **Next.js 14** (App Router)
+- **Next.js 14** (App Router, Edge Runtime)
 - **TypeScript**
-- **TailwindCSS**
+- **TailwindCSS** with custom purple/pink palette
 - **React**
-- **OpenAI API** (GPT-4 Turbo)
-- **OpenAlex API** (research papers)
+- **OpenAI API** (GPT-4 Turbo for summaries and chat)
+- **OpenAlex API** (academic paper database)
+
+## Color Palette
+
+- **Deep Purple**: #0d0b33 - Primary dark accent
+- **Dark Purple**: #4c2f6f - Secondary dark tone
+- **Medium Purple**: #52489f - Interactive elements
+- **Pink Accent**: #c266a7 - Highlights and gradients
+- **Lavender Light**: #e7c8e7 - Soft backgrounds
 
 ## Available Scripts
 
@@ -124,55 +134,61 @@ This helps users understand the environmental cost of AI interactions in a subtl
 
 ### GET /api/topic
 
-Fetches today's sustainability research paper.
+Fetches today's AI-generated research summary.
 
 **Response:**
 ```json
 {
-  "title": "Paper title",
-  "abstract": "Full abstract text",
-  "authors": ["Author 1", "Author 2"],
-  "year": 2024,
-  "url": "https://doi.org/..."
+  "topic": "sustainable agriculture",
+  "summary": "AI-generated synthesis of findings...",
+  "references": [
+    {
+      "title": "Paper title",
+      "authors": ["Author 1", "Author 2"],
+      "year": 2024,
+      "url": "https://doi.org/..."
+    }
+  ]
 }
 ```
 
 ### POST /api/chat
 
-Sends a chat message and receives a streaming response.
+Interactive chat about the research topic.
 
 **Request:**
 ```json
 {
   "messages": [
-    { "role": "user", "content": "How serious is this issue?" }
+    { "role": "user", "content": "What are the key findings?" }
   ],
-  "paperContext": {
-    "title": "...",
-    "abstract": "...",
-    "authors": [...],
-    "year": 2024
+  "topicContext": {
+    "topic": "...",
+    "summary": "...",
+    "references": [...]
   }
 }
 ```
 
-**Response:** Server-sent events stream with OpenAI chat completion chunks
+**Response:** Server-sent events stream with GPT-4 Turbo responses
 
 ## Design Principles
 
-- **Minimalism**: Clean, uncluttered interface with focus on content
-- **Calmness**: Soft colors, generous spacing, gentle animations
-- **Mindfulness**: Environmental impact displayed transparently
-- **Accessibility**: High contrast, readable fonts, keyboard navigation
+- **AI-Powered Learning**: Leverage AI to make research more accessible
+- **Visual Appeal**: Vibrant colors that inspire engagement without distraction
+- **Transparency**: Show environmental costs of AI usage
+- **Mindfulness**: Calm pace, no pressure to engage constantly
+- **Accessibility**: Clear typography, high contrast, keyboard navigation
 - **No Dark Patterns**: No notifications, streaks, or engagement tricks
 
 ## Future Enhancements
 
-- CrossRef API as fallback when OpenAlex returns no results
-- Archive view to browse previous daily papers
-- Paper bookmarking and personal reading lists
-- Enhanced chat with citation references to specific sections
-- Topic filtering by sustainability domain
+- Topic categories with user preferences
+- Archive view for browsing previous summaries
+- Bookmark and save favorite summaries
+- Enhanced citations with specific paper sections
+- Multi-language support
+- Export summaries as PDF
 
 ## License
 
@@ -181,5 +197,5 @@ ISC
 ## Acknowledgments
 
 - Research papers provided by [OpenAlex](https://openalex.org/)
-- AI responses powered by [OpenAI](https://openai.com/)
+- AI summaries and chat powered by [OpenAI](https://openai.com/) GPT-4 Turbo
 - Fonts: Merriweather by Sorkin Type
