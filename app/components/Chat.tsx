@@ -8,16 +8,22 @@ interface Message {
   content: string;
 }
 
+interface Reference {
+  title: string;
+  authors: string[];
+  year: number;
+  url: string | null;
+}
+
 interface ChatProps {
-  paperContext: {
-    title: string;
-    abstract: string;
-    authors: string[];
-    year: number;
+  topicContext: {
+    topic: string;
+    summary: string;
+    references: Reference[];
   } | null;
 }
 
-export default function Chat({ paperContext }: ChatProps) {
+export default function Chat({ topicContext }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +65,7 @@ export default function Chat({ paperContext }: ChatProps) {
         },
         body: JSON.stringify({
           messages: newMessages,
-          paperContext,
+          topicContext,
         }),
       });
 
@@ -124,9 +130,9 @@ export default function Chat({ paperContext }: ChatProps) {
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 fade-in">
-      <h3 className="text-lg font-light mb-4 text-gray-900 dark:text-gray-100">
-        Ask about this research
+    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg p-6 fade-in border border-purple-100 dark:border-purple-900">
+      <h3 className="text-xl font-light mb-4 text-purple-900 dark:text-purple-100">
+        Discuss this research
       </h3>
 
       {error && (
@@ -141,11 +147,11 @@ export default function Chat({ paperContext }: ChatProps) {
             key={idx}
             className={`p-4 rounded ${
               msg.role === 'user'
-                ? 'bg-white dark:bg-gray-700 ml-8'
-                : 'bg-gray-100 dark:bg-gray-900 mr-8'
+                ? 'bg-white dark:bg-gray-700 ml-8 border border-purple-200 dark:border-purple-800'
+                : 'bg-purple-100 dark:bg-gray-900 mr-8 border border-purple-200 dark:border-purple-800'
             }`}
           >
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-xs text-purple-600 dark:text-purple-400 mb-1 font-medium">
               {msg.role === 'user' ? 'You' : 'Assistant'}
             </p>
             <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
@@ -161,14 +167,14 @@ export default function Chat({ paperContext }: ChatProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="How serious is this issue globally?"
+          placeholder="What are the key findings on this topic?"
           disabled={isLoading}
-          className="flex-1 px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 disabled:opacity-50"
+          className="flex-1 px-4 py-3 rounded-lg border border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="px-6 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded hover:bg-gray-700 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
         >
           {isLoading ? 'Thinking...' : 'Ask'}
         </button>

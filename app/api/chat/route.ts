@@ -9,7 +9,7 @@ interface Message {
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, paperContext } = await req.json();
+    const { messages, topicContext } = await req.json();
 
     const apiKey = process.env.OPENAI_API_KEY;
     
@@ -20,15 +20,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are an assistant that explains environmental research in calm, factual, and accessible language. Use only the facts from the provided study text. Avoid speculation, politics, or moralizing.
+    const referencesText = topicContext?.references?.map((ref: any, idx: number) => 
+      `${idx + 1}. "${ref.title}" (${ref.year}) by ${ref.authors.join(', ')}`
+    ).join('\n') || 'No references available';
 
-Research Paper Context:
-Title: ${paperContext?.title || 'N/A'}
-Abstract: ${paperContext?.abstract || 'N/A'}
-Authors: ${paperContext?.authors?.join(', ') || 'N/A'}
-Year: ${paperContext?.year || 'N/A'}
+    const systemPrompt = `You are an assistant that explains environmental research in calm, factual, and accessible language. You have access to an AI-generated summary synthesized from multiple research papers. Use only the facts from the provided summary and references. Avoid speculation, politics, or moralizing.
 
-Answer questions based on this research paper. Keep responses clear, factual, and grounded in the paper's content.`;
+Research Topic: ${topicContext?.topic || 'sustainability'}
+
+Summary of Findings:
+${topicContext?.summary || 'N/A'}
+
+Source Papers:
+${referencesText}
+
+Answer questions based on this research synthesis. Keep responses clear, factual, and grounded in the summary's content. You may reference specific papers when relevant.`;
 
     const chatMessages: Message[] = [
       { role: 'system', content: systemPrompt },
