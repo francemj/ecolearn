@@ -8,14 +8,22 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
 
 ## Recent Changes
 
+- **2025-10-23**: Added tone switcher for AI summaries
+  - Created ToneToggle component allowing users to switch between academic and casual tones
+  - Updated topic API to support tone parameter (academic/casual)
+  - Modified GPT-4 prompts to generate different writing styles based on tone
+  - Updated chat API to match the selected tone
+  - Casual tone uses warmer, conversational language while maintaining scientific accuracy
+  - Tone preference persists in localStorage
+  - Both tones cached separately for 24 hours
+
 - **2025-10-23**: Major update to AI-powered multi-paper summaries
   - Modified topic API to fetch 5-7 papers instead of 1
   - Added GPT-4 Turbo integration to generate comprehensive summaries
   - Redesigned TopicCard to show AI summary with references section
-  - Updated color scheme to vibrant purple/pink palette (#0d0b33, #4c2f6f, #52489f, #c266a7, #e7c8e7)
+  - Updated color scheme to calm green/teal palette (#161d23, #0f444c, #114538, #5e8d83, #d2e1cc)
   - Updated chat system to work with topic context and multiple papers
   - Enhanced error handling with graceful fallbacks throughout
-  - Switched to calm green/teal palette (#161d23, #0f444c, #114538, #5e8d83, #d2e1cc)
   - Configured to use OpenAI API key from Replit Secrets
   
 - **2025-10-22**: Initial project setup
@@ -33,29 +41,46 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
 ```
 /app
   /api
-    /topic/route.ts      - Fetches 5-7 papers and generates AI summaries
-    /chat/route.ts       - Handles AI chat with streaming responses
+    /topic/route.ts      - Fetches 5-7 papers and generates AI summaries (supports tone parameter)
+    /chat/route.ts       - Handles AI chat with streaming responses (tone-aware)
   /components
     TopicCard.tsx        - Displays AI summary with references section
     Chat.tsx             - Chat interface with message streaming
     ImpactCounter.tsx    - Shows environmental cost of conversations
     DarkModeToggle.tsx   - Theme switcher with green gradient
+    ToneToggle.tsx       - Academic/casual tone switcher
   globals.css            - TailwindCSS styles with custom green/teal palette
   layout.tsx             - Root layout with metadata
-  page.tsx               - Main page component
+  page.tsx               - Main page component with tone state management
 ```
 
 ### Key Features
 
-1. **AI-Powered Summaries**: Uses GPT-4 Turbo to synthesize findings from multiple papers into accessible summaries
-2. **Multi-Paper Fetching**: Retrieves 5-7 highly-cited papers on the same topic from OpenAlex
-3. **References Section**: Displays all source papers with authors, year, and links
-4. **Daily Topic Selection**: Uses date-based hashing to ensure all users see the same topic
-5. **24-Hour Caching**: Prevents API rate limits and ensures consistent daily content
-6. **Interactive Chat**: Ask questions about the synthesized research with full context
-7. **Impact Counter**: Estimates energy (Wh) and CO₂ emissions (0.25 Wh per 1000 tokens, 0.4g CO₂ per Wh)
-8. **Calm Design**: Green and teal color palette with natural, soothing aesthetics
-9. **Dark Mode**: Beautiful dark theme with seamless transitions
+1. **Tone Switcher**: Toggle between academic and casual writing styles for AI summaries
+2. **AI-Powered Summaries**: Uses GPT-4 Turbo to synthesize findings from multiple papers into accessible summaries
+3. **Multi-Paper Fetching**: Retrieves 5-7 highly-cited papers on the same topic from OpenAlex
+4. **References Section**: Displays all source papers with authors, year, and links
+5. **Daily Topic Selection**: Uses date-based hashing to ensure all users see the same topic
+6. **24-Hour Caching**: Prevents API rate limits and ensures consistent daily content (caches both tones separately)
+7. **Interactive Chat**: Ask questions about the synthesized research with full context (tone-aware)
+8. **Impact Counter**: Estimates energy (Wh) and CO₂ emissions (0.25 Wh per 1000 tokens, 0.4g CO₂ per Wh)
+9. **Calm Design**: Green and teal color palette with natural, soothing aesthetics
+10. **Dark Mode**: Beautiful dark theme with seamless transitions
+
+### Tone Options
+
+**Academic Tone** (default):
+- Clear, factual, and engaging
+- Accessible language for non-experts
+- Professional but approachable
+- Temperature: 0.7
+
+**Casual Tone**:
+- Warm, conversational, down-to-earth
+- Like chatting with a knowledgeable friend
+- Uses everyday language and relatable examples
+- Still accurate and respects the science
+- Temperature: 0.8
 
 ### Environment Variables
 
@@ -79,6 +104,7 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
 
 - **AI-Enhanced Learning**: Use AI to make research more accessible and digestible
 - **Natural Aesthetics**: Calm green/teal palette inspired by nature
+- **User Choice**: Let users choose their preferred communication style
 - **No ads, gamification, or notifications**
 - **Calm, factual, mindful experience**
 - **Focused on learning, not engagement metrics**
@@ -108,3 +134,4 @@ EcoLearn Daily transforms environmental research consumption by using AI to crea
 - Enhanced chat with specific paper citations
 - Multi-language support
 - Export summaries as PDF
+- Custom tone preferences (technical, ELI5, etc.)

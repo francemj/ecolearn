@@ -10,15 +10,26 @@ EcoLearn Daily transforms how you engage with environmental research. Instead of
 
 ## Features
 
+- **Tone Switcher**: Choose between academic and casual writing styles for AI summaries and chat
 - **AI-Powered Summaries**: Fetches 5-7 recent research papers and uses GPT-4 Turbo to create comprehensive, accessible summaries
 - **Daily Topics**: Automatically selects from 10 sustainability themes using date-based hashing
 - **References Section**: Every summary includes links to all source papers with author information
-- **Interactive Chat**: Ask follow-up questions about the research using AI assistance
+- **Interactive Chat**: Ask follow-up questions about the research using AI assistance (matches your tone preference)
 - **Environmental Impact Tracking**: See the energy usage and CO₂ emissions of your conversations
 - **Calm Design**: Natural green and teal color palette (#161d23, #0f444c, #114538, #5e8d83, #d2e1cc) with serif typography
 - **Dark Mode**: Beautiful dark theme with smooth transitions
 - **24-Hour Caching**: Ensures consistent daily content and respects API limits
 - **Responsive**: Works seamlessly on desktop and mobile
+
+## Tone Options
+
+### Academic Tone (Default)
+The academic tone provides clear, factual summaries using accessible language suitable for non-experts. It maintains a professional yet engaging style.
+
+### Casual Tone
+The casual tone offers a warmer, conversational approach—like learning from a knowledgeable friend. It uses everyday language and relatable examples while still being accurate and respecting the science.
+
+Switch between tones anytime using the toggle button in the top-right corner. Your preference is saved automatically.
 
 ## Setup Instructions
 
@@ -53,7 +64,7 @@ The app will be available at http://localhost:5000
 
 Visit the homepage to see:
 - Today's sustainability topic
-- An AI-generated summary of recent findings
+- An AI-generated summary of recent findings (choose your tone!)
 - References to all source papers
 - An interactive chat to explore the research
 
@@ -68,16 +79,18 @@ Visit the homepage to see:
 ### AI Summary Generation
 
 1. **Paper Retrieval**: Queries OpenAlex API for 5-7 highly-cited papers on the selected topic (published 2020+)
-2. **AI Synthesis**: Sends paper abstracts to GPT-4 Turbo with instructions to create an accessible, comprehensive summary
-3. **Quality Focus**: Highlights key findings, consensus, disagreements, and knowledge gaps
-4. **Caching**: Result is cached for 24 hours to ensure consistency and efficiency
+2. **Tone Selection**: User chooses between academic or casual tone
+3. **AI Synthesis**: Sends paper abstracts to GPT-4 Turbo with tone-specific instructions to create an accessible, comprehensive summary
+4. **Quality Focus**: Highlights key findings, consensus, disagreements, and knowledge gaps
+5. **Caching**: Both tone versions are cached for 24 hours to ensure consistency and efficiency
 
 ### Interactive Chat
 
 1. Users can ask questions about the research topic
 2. The AI assistant has full context of the summary and all source papers
-3. Responses are factual, grounded in the research, and avoid speculation
-4. Token usage is tracked and converted to environmental metrics
+3. Responses match your selected tone (academic or casual)
+4. Responses are factual, grounded in the research, and avoid speculation
+5. Token usage is tracked and converted to environmental metrics
 
 ### Environmental Impact
 
@@ -92,16 +105,17 @@ This transparency helps users understand the environmental cost of AI interactio
 ```
 /app
   /api
-    /topic/route.ts         - Fetches papers and generates AI summaries
-    /chat/route.ts          - Handles interactive chat with streaming
+    /topic/route.ts         - Fetches papers and generates AI summaries (tone-aware)
+    /chat/route.ts          - Handles interactive chat with streaming (tone-aware)
   /components
     TopicCard.tsx           - Displays AI summary with references
     Chat.tsx                - Chat interface with message streaming
     ImpactCounter.tsx       - Shows environmental cost
     DarkModeToggle.tsx      - Theme switcher
+    ToneToggle.tsx          - Academic/casual tone switcher
   globals.css               - TailwindCSS styles with custom colors
   layout.tsx                - Root layout
-  page.tsx                  - Main page component
+  page.tsx                  - Main page component with tone state
 ```
 
 ## Technologies Used
@@ -134,6 +148,9 @@ This transparency helps users understand the environmental cost of AI interactio
 
 Fetches today's AI-generated research summary.
 
+**Parameters:**
+- `tone` (optional): `academic` (default) or `casual`
+
 **Response:**
 ```json
 {
@@ -164,7 +181,8 @@ Interactive chat about the research topic.
     "topic": "...",
     "summary": "...",
     "references": [...]
-  }
+  },
+  "tone": "academic"
 }
 ```
 
@@ -173,6 +191,7 @@ Interactive chat about the research topic.
 ## Design Principles
 
 - **AI-Powered Learning**: Leverage AI to make research more accessible
+- **User Choice**: Let users choose their preferred communication style
 - **Natural Aesthetics**: Calm green/teal palette inspired by nature
 - **Transparency**: Show environmental costs of AI usage
 - **Mindfulness**: Calm pace, no pressure to engage constantly
@@ -181,6 +200,7 @@ Interactive chat about the research topic.
 
 ## Future Enhancements
 
+- Custom tone preferences (technical, ELI5, etc.)
 - Topic categories with user preferences
 - Archive view for browsing previous summaries
 - Bookmark and save favorite summaries
