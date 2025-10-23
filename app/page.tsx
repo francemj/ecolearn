@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import TopicCard from './components/TopicCard';
 import Chat from './components/Chat';
 import DarkModeToggle from './components/DarkModeToggle';
+import ToneToggle, { Tone } from './components/ToneToggle';
 
 interface Reference {
   title: string;
@@ -21,26 +22,36 @@ interface Topic {
 export default function Home() {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tone, setTone] = useState<Tone>('academic');
+
+  const fetchTopic = useCallback(async (currentTone: Tone) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/topic?tone=${currentTone}`);
+      const data = await response.json();
+      setTopic(data);
+    } catch (error) {
+      console.error('Error fetching topic:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchTopic = async () => {
-      try {
-        const response = await fetch('/api/topic');
-        const data = await response.json();
-        setTopic(data);
-      } catch (error) {
-        console.error('Error fetching topic:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const savedTone = (localStorage.getItem('tone') as Tone) || 'academic';
+    setTone(savedTone);
+    fetchTopic(savedTone);
+  }, [fetchTopic]);
 
-    fetchTopic();
-  }, []);
+  const handleToneChange = (newTone: Tone) => {
+    setTone(newTone);
+    fetchTopic(newTone);
+  };
 
   return (
     <main className="min-h-screen py-12 px-4 transition-colors duration-300 bg-gradient-to-b from-white to-sage-light dark:from-gray-900 dark:to-dark-slate">
       <DarkModeToggle />
+      <ToneToggle onToneChange={handleToneChange} />
       
       <div className="max-w-4xl mx-auto">
         <header className="mb-12 text-center fade-in">
@@ -55,7 +66,7 @@ export default function Home() {
         <TopicCard topic={topic} loading={loading} />
 
         {topic && !loading && (
-          <Chat topicContext={topic} />
+          <Chat topicContext={topic} tone={tone} />
         )}
 
         <footer className="mt-16 pt-8 border-t border-sage-green/30 dark:border-sage-green/50 text-center">

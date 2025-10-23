@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
 
@@ -26,7 +26,8 @@ interface Reference {
 }
 
 let cachedTopic: {
-  data: any;
+  academic: any;
+  casual: any;
   date: string;
 } | null = null;
 
@@ -62,8 +63,8 @@ async function generateAISummary(
   topic: string,
   papers: Reference[],
   abstracts: string[],
+  tone: 'academic' | 'casual',
 ): Promise<string> {
-  console.log("process", process.env);
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -79,7 +80,7 @@ Abstract: ${abstracts[idx]}`,
     )
     .join("\n\n");
 
-  const systemPrompt = `You are a research synthesizer that creates clear, accessible summaries of multiple academic papers on environmental topics. Your summaries should:
+  const academicSystemPrompt = `You are a research synthesizer that creates clear, accessible summaries of multiple academic papers on environmental topics. Your summaries should:
 - Be calm, factual, and engaging
 - Highlight key findings and consensus across papers
 - Note any important disagreements or gaps
@@ -87,11 +88,29 @@ Abstract: ${abstracts[idx]}`,
 - Be 3-4 paragraphs long
 - Focus on what we know and what matters`;
 
-  const userPrompt = `Create a comprehensive summary of findings from these ${papers.length} research papers on "${topic}". Focus on synthesizing the key insights, patterns, and important discoveries across all papers.
+  const casualSystemPrompt = `You are a friendly guide who helps people understand environmental research in a laid-back, conversational way. Your summaries should:
+- Be warm, approachable, and down-to-earth
+- Explain findings like you're chatting with a curious friend
+- Use everyday language and relatable examples
+- Still be accurate and respect the science
+- Be 3-4 paragraphs long
+- Make complex ideas feel accessible without dumbing them down
+- Show genuine enthusiasm for interesting discoveries`;
+
+  const academicUserPrompt = `Create a comprehensive summary of findings from these ${papers.length} research papers on "${topic}". Focus on synthesizing the key insights, patterns, and important discoveries across all papers.
 
 ${papersContext}
 
 Create an engaging summary that helps readers understand the current state of research on ${topic}.`;
+
+  const casualUserPrompt = `Hey! I've got ${papers.length} research papers here about "${topic}", and I'd love your help making sense of what they're saying. Can you read through them and give me a friendly rundown of the key stuff researchers are finding?
+
+${papersContext}
+
+Give me the highlights in a way that's easy to follow - what's the big picture on ${topic} right now?`;
+
+  const systemPrompt = tone === 'academic' ? academicSystemPrompt : casualSystemPrompt;
+  const userPrompt = tone === 'academic' ? academicUserPrompt : casualUserPrompt;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -106,7 +125,7 @@ Create an engaging summary that helps readers understand the current state of re
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.7,
+        temperature: tone === 'casual' ? 0.8 : 0.7,
         max_tokens: 800,
       }),
     });
@@ -123,12 +142,14 @@ Create an engaging summary that helps readers understand the current state of re
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const tone = (searchParams.get('tone') || 'academic') as 'academic' | 'casual';
     const today = getTodayDateString();
 
-    if (cachedTopic && cachedTopic.date === today) {
-      return NextResponse.json(cachedTopic.data);
+    if (cachedTopic && cachedTopic.date === today && cachedTopic[tone]) {
+      return NextResponse.json(cachedTopic[tone]);
     }
 
     const topics = [
@@ -169,7 +190,9 @@ export async function GET() {
         references: [],
       };
 
-      cachedTopic = { data: fallbackData, date: today };
+      if (!cachedTopic || cachedTopic.date !== today) {
+        cachedTopic = { academic: fallbackData, casual: fallbackData, date: today };
+      }
       return NextResponse.json(fallbackData);
     }
 
@@ -209,11 +232,13 @@ export async function GET() {
         references: [],
       };
 
-      cachedTopic = { data: fallbackData, date: today };
+      if (!cachedTopic || cachedTopic.date !== today) {
+        cachedTopic = { academic: fallbackData, casual: fallbackData, date: today };
+      }
       return NextResponse.json(fallbackData);
     }
 
-    const summary = await generateAISummary(selectedTopic, papers, abstracts);
+    const summary = await generateAISummary(selectedTopic, papers, abstracts, tone);
 
     const topicData = {
       topic: selectedTopic,
@@ -221,7 +246,15 @@ export async function GET() {
       references: papers,
     };
 
-    cachedTopic = { data: topicData, date: today };
+    if (!cachedTopic || cachedTopic.date !== today) {
+      cachedTopic = {
+        academic: tone === 'academic' ? topicData : null,
+        casual: tone === 'casual' ? topicData : null,
+        date: today,
+      };
+    } else {
+      cachedTopic[tone] = topicData;
+    }
 
     return NextResponse.json(topicData);
   } catch (error) {

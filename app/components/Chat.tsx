@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import ImpactCounter from './ImpactCounter';
+import { Tone } from './ToneToggle';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -21,9 +22,10 @@ interface ChatProps {
     summary: string;
     references: Reference[];
   } | null;
+  tone: Tone;
 }
 
-export default function Chat({ topicContext }: ChatProps) {
+export default function Chat({ topicContext, tone }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +68,7 @@ export default function Chat({ topicContext }: ChatProps) {
         body: JSON.stringify({
           messages: newMessages,
           topicContext,
+          tone,
         }),
       });
 
