@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       return new Response(
         JSON.stringify({
           error:
-            "Chat unavailable — add your OpenAI key to Replit Secrets to enable responses.",
+            "Chat unavailable — add your OpenAI key to environment variables to enable responses.",
         }),
         { status: 503, headers: { "Content-Type": "application/json" } }
       )

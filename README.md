@@ -31,43 +31,6 @@ The casual tone offers a warmer, conversational approach—like learning from a 
 
 Switch between tones anytime using the toggle button in the top-right corner. Your preference is saved automatically.
 
-## Setup Instructions
-
-### 1. Add Your OpenAI API Key to Replit Secrets
-
-The app requires an OpenAI API key for both summary generation and chat functionality.
-
-1. In Replit, open the **Secrets** tab (🔒 icon in the sidebar)
-2. Click **"Add a new secret"**
-3. Set the key name to: `OPENAI_API_KEY`
-4. Paste your OpenAI API key as the value
-5. Click **"Add Secret"**
-
-To get your OpenAI API key:
-- Visit https://platform.openai.com/api-keys
-- Create a new API key
-- Copy the key
-
-**Important**: The app uses Replit Secrets for secure API key management. The key is automatically available to your application through environment variables.
-
-### 2. Run the Development Server
-
-The server should already be running! If not, you can start it with:
-
-```bash
-npm run dev
-```
-
-The app will be available at http://localhost:5000
-
-### 3. Explore Today's Research
-
-Visit the homepage to see:
-- Today's sustainability topic
-- An AI-generated summary of recent findings (choose your tone!)
-- References to all source papers
-- An interactive chat to explore the research
-
 ## How It Works
 
 ### Daily Topic Selection
