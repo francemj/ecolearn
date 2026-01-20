@@ -22,11 +22,19 @@ interface Topic {
 export default function Home() {
   const [topic, setTopic] = useState<Topic | null>(null)
   const [loading, setLoading] = useState(true)
+  const [generatingOnTheSpot, setGeneratingOnTheSpot] = useState(false)
   const [tone, setTone] = useState<Tone>("academic")
 
   const fetchTopic = useCallback(async (currentTone: Tone) => {
     try {
       setLoading(true)
+      setGeneratingOnTheSpot(false)
+
+      fetch(`/api/topic?tone=${currentTone}&check=1`)
+        .then((r) => r.json())
+        .then((d) => setGeneratingOnTheSpot(!d.cached))
+        .catch(() => {})
+
       const response = await fetch(`/api/topic?tone=${currentTone}`)
       const data = await response.json()
       setTopic(data)
@@ -61,7 +69,11 @@ export default function Home() {
           </p>
         </header>
 
-        <TopicCard topic={topic} loading={loading} />
+        <TopicCard
+          topic={topic}
+          loading={loading}
+          generatingOnTheSpot={generatingOnTheSpot}
+        />
 
         {topic && !loading && <Chat topicContext={topic} tone={tone} />}
 

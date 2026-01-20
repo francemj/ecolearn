@@ -14,9 +14,30 @@ interface TopicCardProps {
     references: Reference[]
   } | null
   loading: boolean
+  generatingOnTheSpot?: boolean
 }
 
-export default function TopicCard({ topic, loading }: TopicCardProps) {
+export default function TopicCard({
+  topic,
+  loading,
+  generatingOnTheSpot = false,
+}: TopicCardProps) {
+  if (loading && generatingOnTheSpot) {
+    return (
+      <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-sage-green/30 dark:border-sage-green/50">
+        <p className="text-gray-700 dark:text-gray-300 mb-6">
+          You&apos;re the first user of the day — we&apos;re generating
+          today&apos;s research for you on the spot.
+        </p>
+        <div className="animate-pulse">
+          <div className="h-4 bg-sage-green/20 dark:bg-gray-700 rounded w-full mb-2"></div>
+          <div className="h-4 bg-sage-green/20 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-sage-green/20 dark:bg-gray-700 rounded w-2/3"></div>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-sage-green/30 dark:border-sage-green/50">

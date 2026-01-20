@@ -179,6 +179,11 @@ export async function GET(request: NextRequest) {
       | "casual"
     const today = getTodayDateString()
 
+    if (searchParams.get("check") === "1") {
+      const cached = await getCached(today, tone)
+      return NextResponse.json({ cached: cached != null })
+    }
+
     const cached = await getCached(today, tone)
     if (cached) return NextResponse.json(cached)
 
