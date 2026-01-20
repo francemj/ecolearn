@@ -38,7 +38,7 @@ export default function Chat({ topicContext, tone }: ChatProps) {
   }
 
   useEffect(() => {
-    scrollToBottom()
+    if (messages.length > 0) scrollToBottom()
   }, [messages])
 
   const estimateTokens = (text: string): number => {
