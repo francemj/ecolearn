@@ -3,15 +3,24 @@
 import { useState, useEffect } from "react"
 
 export default function DarkModeToggle() {
-  const [isDark, setIsDark] = useState(
-    typeof window !== "undefined" && localStorage.getItem("darkMode") === "true"
-  )
+  const [isDark, setIsDark] = useState(false)
 
+  // Sync from localStorage after mount to avoid hydration mismatch.
+  // Defer setState to a microtask so it runs in a callback, not synchronously in the effect.
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark")
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      const saved = localStorage.getItem("darkMode") === "true"
+      setIsDark(saved)
+      if (saved) {
+        document.documentElement.classList.add("dark")
+      }
+    })
+    return () => {
+      cancelled = true
     }
-  }, [isDark])
+  }, [])
 
   const toggleDarkMode = () => {
     const newDarkMode = !isDark

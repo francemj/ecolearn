@@ -9,17 +9,31 @@ interface ToneToggleProps {
 }
 
 export default function ToneToggle({ onToneChange }: ToneToggleProps) {
-  const [tone, setTone] = useState<Tone>(
-    typeof window !== "undefined" && localStorage.getItem("tone")
-      ? (localStorage.getItem("tone") as Tone)
-      : "academic"
-  )
+  const [tone, setTone] = useState<Tone>("academic")
+  const [mounted, setMounted] = useState(false)
+
+  // Sync from localStorage after mount to avoid hydration mismatch.
+  // Defer setState to a microtask so it runs in a callback, not synchronously in the effect.
+  useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      const saved = localStorage.getItem("tone") as Tone | null
+      if (saved === "academic" || saved === "casual") {
+        setTone(saved)
+      }
+      setMounted(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
-    if (tone === "academic" || tone === "casual") {
+    if (mounted && (tone === "academic" || tone === "casual")) {
       onToneChange(tone)
     }
-  }, [onToneChange, tone])
+  }, [onToneChange, tone, mounted])
 
   const toggleTone = () => {
     const newTone: Tone = tone === "academic" ? "casual" : "academic"
