@@ -8,10 +8,30 @@ EcoLearn Daily transforms how you engage with environmental research. Instead of
 
 **Design Philosophy**: Built to learn, not to keep you hooked. No ads, gamification, notifications, or tracking.
 
+## Setup
+
+1. **Clone and install**
+   ```bash
+   git clone <repo-url>
+   cd ecolearn
+   npm install
+   ```
+
+2. **Environment variables**
+   - Copy `.env.example` to `.env`
+   - **Required:** `OPENAI_API_KEY` — for AI summaries and chat (get one at [OpenAI](https://platform.openai.com/api-keys))
+   - **Optional:** `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` — for 24-hour shared caching of topic summaries (app works without Redis; it will generate on each request)
+
+3. **Run**
+   ```bash
+   npm run dev
+   ```
+   App runs at `http://localhost:3333`.
+
 ## Features
 
 - **Tone Switcher**: Choose between academic and casual writing styles for AI summaries and chat
-- **AI-Powered Summaries**: Fetches 5-7 recent research papers and uses GPT-4 Turbo to create comprehensive, accessible summaries
+- **AI-Powered Summaries**: Fetches 5-7 recent research papers and uses GPT-4o to create comprehensive, accessible summaries
 - **Daily Topics**: Automatically selects from ~90 pointed sustainability subthemes using date-based hashing (many days before repetition)
 - **References Section**: Every summary includes links to all source papers with author information
 - **Interactive Chat**: Ask follow-up questions about the research using AI assistance (matches your tone preference)
@@ -44,7 +64,7 @@ Switch between tones anytime using the toggle button in the top-right corner. Yo
 
 1. **Paper Retrieval**: Queries OpenAlex API for 5-7 highly-cited papers on the selected topic (published 2020+)
 2. **Tone Selection**: User chooses between academic or casual tone
-3. **AI Synthesis**: Sends paper abstracts to GPT-4 Turbo with tone-specific instructions to create an accessible, comprehensive summary
+3. **AI Synthesis**: Sends paper abstracts to GPT-4o with tone-specific instructions to create an accessible, comprehensive summary
 4. **Quality Focus**: Highlights key findings, consensus, disagreements, and knowledge gaps
 5. **Caching**: Both tone versions are stored in Upstash Redis for 24 hours so all visitors and instances share the same cache; if Redis is not configured, the app skips caching and generates on each request
 
@@ -86,12 +106,12 @@ This transparency helps users understand the environmental cost of AI interactio
 
 ## Technologies Used
 
-- **Next.js 14** (App Router, Edge Runtime)
+- **Next.js 16** (App Router, Edge Runtime)
 - **TypeScript**
 - **TailwindCSS** with custom green/teal palette
-- **React**
-- **OpenAI API** (GPT-4 Turbo for summaries and chat)
-- **OpenAlex API** (academic paper database)
+- **React 19**
+- **OpenAI API** — GPT-4o for topic summaries, GPT-4 Turbo for chat
+- **OpenAlex API** (academic paper database; no API key required)
 - **Upstash Redis** (optional; shared cache for topic API when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set)
 
 ## Color Palette
@@ -104,10 +124,12 @@ This transparency helps users understand the environmental cost of AI interactio
 
 ## Available Scripts
 
-- `npm run dev` - Start development server on port 5000
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
+- `npm run dev` — Start development server (port 3333)
+- `npm run build` — Build for production
+- `npm start` — Start production server (port 3333)
+- `npm run check` — TypeScript check
+- `npm run lint` — Run ESLint
+- `npm run lint:fix` — Run ESLint with auto-fix
 
 ## API Reference
 
@@ -153,7 +175,7 @@ Interactive chat about the research topic.
 }
 ```
 
-**Response:** Server-sent events stream with GPT-4 Turbo responses
+**Response:** Server-sent events stream (GPT-4 Turbo)
 
 ## Design Principles
 
@@ -182,5 +204,5 @@ ISC
 ## Acknowledgments
 
 - Research papers provided by [OpenAlex](https://openalex.org/)
-- AI summaries and chat powered by [OpenAI](https://openai.com/) GPT-4 Turbo
+- Topic summaries (GPT-4o) and chat (GPT-4 Turbo) powered by [OpenAI](https://openai.com/)
 - Fonts: Merriweather by Sorkin Type

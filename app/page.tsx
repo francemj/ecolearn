@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react"
 import TopicCard from "./components/TopicCard"
 import Chat from "./components/Chat"
-import DarkModeToggle from "./components/DarkModeToggle"
 import ToneToggle, { Tone } from "./components/ToneToggle"
 
 interface Reference {
@@ -55,7 +54,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen py-12 px-4 transition-colors duration-300 bg-gradient-to-b from-white to-sage-light dark:from-gray-900 dark:to-dark-slate">
-      <DarkModeToggle />
       <ToneToggle onToneChange={handleToneChange} />
 
       <div className="max-w-4xl mx-auto">
