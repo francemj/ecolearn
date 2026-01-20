@@ -87,21 +87,28 @@ export default function Chat({ topicContext, tone }: ChatProps) {
       let assistantMessage = ""
       setMessages((prev) => [...prev, { role: "assistant", content: "" }])
 
+      let buffer = ""
+
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split("\n")
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+
+        // Keep the last potentially incomplete line in the buffer
+        buffer = lines.pop() || ""
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6)
-            if (data === "[DONE]") continue
+          const trimmed = line.trim()
+          if (!trimmed || !trimmed.startsWith("data: ")) continue
 
+          const data = trimmed.slice(6)
+          if (data === "[DONE]") continue
+
+          try {
             const parsed = JSON.parse(data)
             const content = parsed.choices?.[0]?.delta?.content
-
             if (content) {
               assistantMessage += content
               setMessages((prev) => {
@@ -113,6 +120,8 @@ export default function Chat({ topicContext, tone }: ChatProps) {
                 return updated
               })
             }
+          } catch {
+            // Skip malformed JSON (shouldn't happen with proper buffering)
           }
         }
       }
