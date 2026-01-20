@@ -1,6 +1,17 @@
+import { Redis } from "@upstash/redis"
 import { NextRequest, NextResponse } from "next/server"
 
 export const runtime = "edge"
+
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL as string,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN as string,
+      })
+    : null
+
+const CACHE_TTL = 86400 // 24h in seconds
 
 interface Reference {
   title: string
@@ -9,11 +20,45 @@ interface Reference {
   url: string | null
 }
 
-let cachedTopic: {
-  academic: any
-  casual: any
-  date: string
-} | null = null
+async function getCached(
+  date: string,
+  tone: string
+): Promise<{ topic: string; summary: string; references: Reference[] } | null> {
+  if (!redis) return null
+  try {
+    const raw = await redis.get(`ecolearn:topic:${date}:${tone}`)
+
+    return raw != null
+      ? typeof raw === "string"
+        ? (JSON.parse(raw) as {
+            topic: string
+            summary: string
+            references: Reference[]
+          })
+        : typeof raw === "object"
+          ? (raw as { topic: string; summary: string; references: Reference[] })
+          : null
+      : null
+  } catch (e) {
+    console.error("Redis getCached error:", e)
+    return null
+  }
+}
+
+async function setCached(
+  date: string,
+  tone: string,
+  data: { topic: string; summary: string; references: Reference[] }
+): Promise<void> {
+  if (!redis) return
+  try {
+    await redis.set(`ecolearn:topic:${date}:${tone}`, JSON.stringify(data), {
+      ex: CACHE_TTL,
+    })
+  } catch (e) {
+    console.error("Redis setCached error:", e)
+  }
+}
 
 function getTodayDateString(): string {
   const now = new Date()
@@ -135,9 +180,8 @@ export async function GET(request: NextRequest) {
       | "casual"
     const today = getTodayDateString()
 
-    if (cachedTopic && cachedTopic.date === today && cachedTopic[tone]) {
-      return NextResponse.json(cachedTopic[tone])
-    }
+    const cached = await getCached(today, tone)
+    if (cached) return NextResponse.json(cached)
 
     const topics = [
       "climate change",
@@ -176,14 +220,8 @@ export async function GET(request: NextRequest) {
           "Today's research is still being fetched. Check back soon for an AI-generated summary of recent sustainability research.",
         references: [],
       }
-
-      if (!cachedTopic || cachedTopic.date !== today) {
-        cachedTopic = {
-          academic: fallbackData,
-          casual: fallbackData,
-          date: today,
-        }
-      }
+      await setCached(today, "academic", fallbackData)
+      await setCached(today, "casual", fallbackData)
       return NextResponse.json(fallbackData)
     }
 
@@ -196,7 +234,9 @@ export async function GET(request: NextRequest) {
         const authors =
           work.authorships
             ?.slice(0, 3)
-            .map((a: any) => a.author.display_name) || []
+            .map(
+              (a: { author: { display_name: string } }) => a.author.display_name
+            ) || []
         const url =
           work.primary_location?.landing_page_url ||
           (work.doi
@@ -222,14 +262,8 @@ export async function GET(request: NextRequest) {
           "Research papers on this topic are being processed. Check back soon for insights.",
         references: [],
       }
-
-      if (!cachedTopic || cachedTopic.date !== today) {
-        cachedTopic = {
-          academic: fallbackData,
-          casual: fallbackData,
-          date: today,
-        }
-      }
+      await setCached(today, "academic", fallbackData)
+      await setCached(today, "casual", fallbackData)
       return NextResponse.json(fallbackData)
     }
 
@@ -245,17 +279,7 @@ export async function GET(request: NextRequest) {
       summary,
       references: papers,
     }
-
-    if (!cachedTopic || cachedTopic.date !== today) {
-      cachedTopic = {
-        academic: tone === "academic" ? topicData : null,
-        casual: tone === "casual" ? topicData : null,
-        date: today,
-      }
-    } else {
-      cachedTopic[tone] = topicData
-    }
-
+    await setCached(today, tone, topicData)
     return NextResponse.json(topicData)
   } catch (error) {
     console.error("Error fetching topic:", error)

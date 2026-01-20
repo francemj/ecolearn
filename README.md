@@ -18,7 +18,7 @@ EcoLearn Daily transforms how you engage with environmental research. Instead of
 - **Environmental Impact Tracking**: See the energy usage and CO₂ emissions of your conversations
 - **Calm Design**: Natural green and teal color palette (#161d23, #0f444c, #114538, #5e8d83, #d2e1cc) with serif typography
 - **Dark Mode**: Beautiful dark theme with smooth transitions
-- **24-Hour Caching**: Ensures consistent daily content and respects API limits
+- **Shared 24-Hour Cache (Upstash Redis)**: Topic responses are cached in Redis so all visitors and instances benefit; only the first request per tone per day triggers OpenAlex + OpenAI. Optional—if Redis is not configured, the app runs without caching.
 - **Responsive**: Works seamlessly on desktop and mobile
 
 ## Tone Options
@@ -45,7 +45,7 @@ Switch between tones anytime using the toggle button in the top-right corner. Yo
 2. **Tone Selection**: User chooses between academic or casual tone
 3. **AI Synthesis**: Sends paper abstracts to GPT-4 Turbo with tone-specific instructions to create an accessible, comprehensive summary
 4. **Quality Focus**: Highlights key findings, consensus, disagreements, and knowledge gaps
-5. **Caching**: Both tone versions are cached for 24 hours to ensure consistency and efficiency
+5. **Caching**: Both tone versions are stored in Upstash Redis for 24 hours so all visitors and instances share the same cache; if Redis is not configured, the app skips caching and generates on each request
 
 ### Interactive Chat
 
@@ -89,6 +89,7 @@ This transparency helps users understand the environmental cost of AI interactio
 - **React**
 - **OpenAI API** (GPT-4 Turbo for summaries and chat)
 - **OpenAlex API** (academic paper database)
+- **Upstash Redis** (optional; shared cache for topic API when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set)
 
 ## Color Palette
 
