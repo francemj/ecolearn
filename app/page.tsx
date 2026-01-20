@@ -56,8 +56,8 @@ export default function Home() {
             EcoLearn Daily
           </h1>
           <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg">
-            AI-powered insights from multiple sustainability research papers,
-            daily.
+            Research overviews on sustainability topics, with papers to explore
+            further.
           </p>
         </header>
 

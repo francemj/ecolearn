@@ -26,7 +26,7 @@ async function getCached(
 ): Promise<{ topic: string; summary: string; references: Reference[] } | null> {
   if (!redis) return null
   try {
-    const raw = await redis.get(`ecolearn:topic:${date}:${tone}`)
+    const raw = await redis.get(`ecolearn:topic:v2:${date}:${tone}`)
 
     return raw != null
       ? typeof raw === "string"
@@ -52,7 +52,7 @@ async function setCached(
 ): Promise<void> {
   if (!redis) return
   try {
-    await redis.set(`ecolearn:topic:${date}:${tone}`, JSON.stringify(data), {
+    await redis.set(`ecolearn:topic:v2:${date}:${tone}`, JSON.stringify(data), {
       ex: CACHE_TTL,
     })
   } catch (e) {
@@ -101,42 +101,39 @@ async function generateAISummary(
   }
 
   const papersContext = papers
-    .map(
-      (paper, idx) =>
-        `Paper ${idx + 1}: "${paper.title}" (${paper.year})
-Authors: ${paper.authors.join(", ")}
-Abstract: ${abstracts[idx]}`
-    )
+    .map((paper, idx) => {
+      const focus =
+        abstracts[idx].length > 220
+          ? abstracts[idx].slice(0, 220).trim() + "…"
+          : abstracts[idx]
+      return `[${idx + 1}] "${paper.title}" (${paper.year}) — ${paper.authors.join(", ")}
+Focus: ${focus}
+URL: ${paper.url || "N/A"}`
+    })
     .join("\n\n")
 
-  const academicSystemPrompt = `You are a research synthesizer that creates clear, accessible summaries of multiple academic papers on environmental topics. Your summaries should:
-- Be calm, factual, and engaging
-- Highlight key findings and consensus across papers
-- Note any important disagreements or gaps
-- Use accessible language for non-experts
-- Be 3-4 paragraphs long
-- Focus on what we know and what matters`
+  const academicSystemPrompt = `You are a researcher who writes clear, accessible research overviews on environmental topics. Your task is a research overview of the topic using your knowledge—not a summary of the provided sources.
 
-  const casualSystemPrompt = `You are a friendly guide who helps people understand environmental research in a laid-back, conversational way. Your summaries should:
-- Be warm, approachable, and down-to-earth
-- Explain findings like you're chatting with a curious friend
-- Use everyday language and relatable examples
-- Still be accurate and respect the science
-- Be 3-4 paragraphs long
-- Make complex ideas feel accessible without dumbing them down
-- Show genuine enthusiasm for interesting discoveries`
+- Do NOT simply summarize the provided sources. Use them as references to cite when they support, expand on, argue against, or complicate a point. Never exclude a source because it argues against your point; that is anti-science and anti-progress.
+- Use citation markers [1], [2], … matching the source list below; direct readers to those sources to dive deeper on specific aspects.
+- Be calm, factual, and engaging. Use accessible language for non-experts.
+- Be 4-5 paragraphs long. Focus on what we know and what matters.`
 
-  const academicUserPrompt = `Create a comprehensive summary of findings from these ${papers.length} research papers on "${topic}". Focus on synthesizing the key insights, patterns, and important discoveries across all papers.
+  const casualSystemPrompt = `You're a friendly guide who writes research overviews on environmental topics in a laid-back, conversational way. Your task is a research overview using your knowledge—not a summary of the provided sources.
 
-${papersContext}
+- Do NOT simply summarize the provided sources. Use them as references to cite when they support, expand on, argue against, or complicate a point. Never exclude a source because it argues against you; that is anti-science and anti-progress.
+- Use citation markers [1], [2], … matching the source list; direct readers to those sources to dive deeper. Be warm, approachable, and accurate.
+- Be 4-5 paragraphs. Make complex ideas feel accessible without dumbing them down.`
 
-Create an engaging summary that helps readers understand the current state of research on ${topic}.`
+  const academicUserPrompt = `Write a research overview of "${topic}" that draws on your knowledge to explain the topic. Cite the provided sources [1], [2], … where they support, deepen, argue against, or complicate a point—never exclude a source because it argues against you. Do not summarize the sources; use them only as citations and further-reading pointers. Encourage readers to use those sources to explore further.
 
-  const casualUserPrompt = `Hey! I've got ${papers.length} research papers here about "${topic}", and I'd love your help making sense of what they're saying. Can you read through them and give me a friendly rundown of the key stuff researchers are finding?
+Sources:
+${papersContext}`
 
-${papersContext}
+  const casualUserPrompt = `Write a friendly research overview of "${topic}" using your knowledge. Cite the sources [1], [2], … where they support, deepen, argue against, or complicate a point—never exclude a source because it argues against you. Don't summarize the sources; use them as citations and pointers for further reading. Encourage readers to dive into those papers to learn more.
 
-Give me the highlights in a way that's easy to follow - what's the big picture on ${topic} right now?`
+Sources:
+${papersContext}`
 
   const systemPrompt =
     tone === "academic" ? academicSystemPrompt : casualSystemPrompt
@@ -150,13 +147,13 @@ Give me the highlights in a way that's easy to follow - what's the big picture o
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4-turbo",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
         temperature: tone === "casual" ? 0.8 : 0.7,
-        max_tokens: 800,
+        max_tokens: 1200,
       }),
     })
 
