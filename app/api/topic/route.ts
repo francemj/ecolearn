@@ -1,9 +1,10 @@
 import { Redis } from "@upstash/redis"
-import { NextRequest, NextResponse } from "next/server"
+import { after, NextRequest, NextResponse } from "next/server"
 
 import { TOPICS } from "./topics"
 
 export const runtime = "edge"
+export const maxDuration = 60
 
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -271,6 +272,28 @@ export async function GET(request: NextRequest) {
       references: papers,
     }
     await setCached(today, tone, topicData)
+
+    const otherTone = tone === "academic" ? "casual" : "academic"
+    after(async () => {
+      try {
+        const existing = await getCached(today, otherTone)
+        if (existing) return
+        const otherSummary = await generateAISummary(
+          selectedTopic,
+          papers,
+          abstracts,
+          otherTone
+        )
+        await setCached(today, otherTone, {
+          topic: selectedTopic,
+          summary: otherSummary,
+          references: papers,
+        })
+      } catch (e) {
+        console.error("Prewarm other tone failed:", e)
+      }
+    })
+
     return NextResponse.json(topicData)
   } catch (error) {
     console.error("Error fetching topic:", error)
