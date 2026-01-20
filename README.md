@@ -12,7 +12,7 @@ EcoLearn Daily transforms how you engage with environmental research. Instead of
 
 - **Tone Switcher**: Choose between academic and casual writing styles for AI summaries and chat
 - **AI-Powered Summaries**: Fetches 5-7 recent research papers and uses GPT-4 Turbo to create comprehensive, accessible summaries
-- **Daily Topics**: Automatically selects from 10 sustainability themes using date-based hashing
+- **Daily Topics**: Automatically selects from ~90 pointed sustainability subthemes using date-based hashing (many days before repetition)
 - **References Section**: Every summary includes links to all source papers with author information
 - **Interactive Chat**: Ask follow-up questions about the research using AI assistance (matches your tone preference)
 - **Environmental Impact Tracking**: See the energy usage and CO₂ emissions of your conversations
@@ -35,9 +35,10 @@ Switch between tones anytime using the toggle button in the top-right corner. Yo
 
 ### Daily Topic Selection
 
-1. The app hashes today's date to consistently select one of 10 sustainability topics
-2. Topics include: climate change, renewable energy, sustainable agriculture, ocean conservation, biodiversity, circular economy, carbon sequestration, pollution, urban planning, and water conservation
-3. All users worldwide see the same topic each day
+1. The app hashes today's date to consistently select one of ~90 pointed sustainability subthemes (see `app/api/topic/topics.ts`)
+2. Topics are specific, research-dense subthemes (e.g. "Arctic permafrost thaw and methane feedbacks", "Battery recycling and the EV transition") that fit a short overview plus 5–7 papers—rather than broad themes like "climate change"
+3. The list is interleaved by category so similar topics do not cluster on consecutive days
+4. All users worldwide see the same topic each day
 
 ### AI Summary Generation
 
@@ -68,7 +69,9 @@ This transparency helps users understand the environmental cost of AI interactio
 ```
 /app
   /api
-    /topic/route.ts         - Fetches papers and generates AI summaries (tone-aware)
+    /topic/
+      route.ts              - Fetches papers and generates AI summaries (tone-aware)
+      topics.ts             - Pointed topic list (~90 items) for OpenAlex and display
     /chat/route.ts          - Handles interactive chat with streaming (tone-aware)
   /components
     TopicCard.tsx           - Displays AI summary with references

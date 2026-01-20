@@ -1,6 +1,8 @@
 import { Redis } from "@upstash/redis"
 import { NextRequest, NextResponse } from "next/server"
 
+import { TOPICS } from "./topics"
+
 export const runtime = "edge"
 
 const redis =
@@ -180,21 +182,8 @@ export async function GET(request: NextRequest) {
     const cached = await getCached(today, tone)
     if (cached) return NextResponse.json(cached)
 
-    const topics = [
-      "climate change",
-      "renewable energy",
-      "sustainable agriculture",
-      "ocean conservation",
-      "biodiversity loss",
-      "circular economy",
-      "carbon sequestration",
-      "environmental pollution",
-      "sustainable urban planning",
-      "water conservation",
-    ]
-
-    const topicIndex = hashDateToTopicIndex(today) % topics.length
-    const selectedTopic = topics[topicIndex]
+    const topicIndex = hashDateToTopicIndex(today) % TOPICS.length
+    const selectedTopic = TOPICS[topicIndex]
 
     const searchUrl = `https://api.openalex.org/works?filter=title_and_abstract.search:${encodeURIComponent(selectedTopic)},type:article,from_publication_date:2020-01-01&sort=cited_by_count:desc&per_page=7`
 
