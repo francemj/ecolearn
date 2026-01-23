@@ -1,71 +1,22 @@
-import { Redis } from "@upstash/redis"
 import { after, NextRequest, NextResponse } from "next/server"
 
 import { TOPICS } from "./topics"
+import {
+  getCachedTopic,
+  setCachedTopic,
+  getTodayDateString,
+  incrementArticleTokens,
+} from "@/app/lib/redis"
+import { supabase } from "@/app/lib/supabase"
 
 export const runtime = "edge"
 export const maxDuration = 60
-
-const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL as string,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN as string,
-      })
-    : null
-
-const CACHE_TTL = 86400 // 24h in seconds
 
 interface Reference {
   title: string
   authors: string[]
   year: number
   url: string | null
-}
-
-async function getCached(
-  date: string,
-  tone: string
-): Promise<{ topic: string; summary: string; references: Reference[] } | null> {
-  if (!redis) return null
-  try {
-    const raw = await redis.get(`ecolearn:topic:v2:${date}:${tone}`)
-
-    return raw != null
-      ? typeof raw === "string"
-        ? (JSON.parse(raw) as {
-            topic: string
-            summary: string
-            references: Reference[]
-          })
-        : typeof raw === "object"
-          ? (raw as { topic: string; summary: string; references: Reference[] })
-          : null
-      : null
-  } catch (e) {
-    console.error("Redis getCached error:", e)
-    return null
-  }
-}
-
-async function setCached(
-  date: string,
-  tone: string,
-  data: { topic: string; summary: string; references: Reference[] }
-): Promise<void> {
-  if (!redis) return
-  try {
-    await redis.set(`ecolearn:topic:v2:${date}:${tone}`, JSON.stringify(data), {
-      ex: CACHE_TTL,
-    })
-  } catch (e) {
-    console.error("Redis setCached error:", e)
-  }
-}
-
-function getTodayDateString(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
 }
 
 function hashDateToTopicIndex(dateString: string): number {
@@ -91,16 +42,24 @@ function reconstructAbstract(invertedIndex?: Record<string, number[]>): string {
   return words.map((w) => w[0]).join(" ")
 }
 
+interface SummaryResult {
+  summary: string
+  tokensUsed: number
+}
+
 async function generateAISummary(
   topic: string,
   papers: Reference[],
   abstracts: string[],
   tone: "academic" | "casual"
-): Promise<string> {
+): Promise<SummaryResult> {
   const apiKey = process.env.OPENAI_API_KEY
 
   if (!apiKey) {
-    return `Today's topic is ${topic}. Multiple research papers on this topic have been gathered, but AI summary generation is unavailable. Add your OpenAI key to enable AI-powered summaries.`
+    return {
+      summary: `Today's topic is ${topic}. Multiple research papers on this topic have been gathered, but AI summary generation is unavailable. Add your OpenAI key to enable AI-powered summaries.`,
+      tokensUsed: 0,
+    }
   }
 
   const papersContext = papers
@@ -165,10 +124,42 @@ ${papersContext}`
     }
 
     const data = await response.json()
-    return data.choices[0].message.content
+    const tokensUsed = data.usage?.total_tokens || 0
+    return {
+      summary: data.choices[0].message.content,
+      tokensUsed,
+    }
   } catch (error) {
     console.error("Error generating AI summary:", error)
-    return `Research on ${topic} is actively being studied across multiple dimensions. While we've gathered ${papers.length} significant papers on this topic, the AI summary is temporarily unavailable. Please check the references below to explore the research directly.`
+    return {
+      summary: `Research on ${topic} is actively being studied across multiple dimensions. While we've gathered ${papers.length} significant papers on this topic, the AI summary is temporarily unavailable. Please check the references below to explore the research directly.`,
+      tokensUsed: 0,
+    }
+  }
+}
+
+async function storeArticleToSupabase(
+  date: string,
+  topic: string,
+  tone: "academic" | "casual",
+  summary: string,
+  references: Reference[]
+): Promise<void> {
+  if (!supabase) return
+  try {
+    const columnName =
+      tone === "academic" ? "summary_academic" : "summary_casual"
+    await supabase.from("daily_articles").upsert(
+      {
+        date,
+        topic,
+        [columnName]: summary,
+        source_papers: references,
+      },
+      { onConflict: "date" }
+    )
+  } catch (e) {
+    console.error("Error storing article to Supabase:", e)
   }
 }
 
@@ -181,11 +172,11 @@ export async function GET(request: NextRequest) {
     const today = getTodayDateString()
 
     if (searchParams.get("check") === "1") {
-      const cached = await getCached(today, tone)
+      const cached = await getCachedTopic(today, tone)
       return NextResponse.json({ cached: cached != null })
     }
 
-    const cached = await getCached(today, tone)
+    const cached = await getCachedTopic(today, tone)
     if (cached) return NextResponse.json(cached)
 
     const topicIndex = hashDateToTopicIndex(today) % TOPICS.length
@@ -212,8 +203,8 @@ export async function GET(request: NextRequest) {
           "Today's research is still being fetched. Check back soon for an AI-generated summary of recent sustainability research.",
         references: [],
       }
-      await setCached(today, "academic", fallbackData)
-      await setCached(today, "casual", fallbackData)
+      await setCachedTopic(today, "academic", fallbackData)
+      await setCachedTopic(today, "casual", fallbackData)
       return NextResponse.json(fallbackData)
     }
 
@@ -254,37 +245,52 @@ export async function GET(request: NextRequest) {
           "Research papers on this topic are being processed. Check back soon for insights.",
         references: [],
       }
-      await setCached(today, "academic", fallbackData)
-      await setCached(today, "casual", fallbackData)
+      await setCachedTopic(today, "academic", fallbackData)
+      await setCachedTopic(today, "casual", fallbackData)
       return NextResponse.json(fallbackData)
     }
 
-    const summary = await generateAISummary(
+    const { summary, tokensUsed } = await generateAISummary(
       selectedTopic,
       papers,
       abstracts,
       tone
     )
 
+    // Track tokens used for article generation
+    await incrementArticleTokens(today, tokensUsed)
+
+    // Store article to Supabase
+    await storeArticleToSupabase(today, selectedTopic, tone, summary, papers)
+
     const topicData = {
       topic: selectedTopic,
       summary,
       references: papers,
     }
-    await setCached(today, tone, topicData)
+    await setCachedTopic(today, tone, topicData)
 
     const otherTone = tone === "academic" ? "casual" : "academic"
     after(async () => {
       try {
-        const existing = await getCached(today, otherTone)
+        const existing = await getCachedTopic(today, otherTone)
         if (existing) return
-        const otherSummary = await generateAISummary(
+        const { summary: otherSummary, tokensUsed: otherTokens } =
+          await generateAISummary(selectedTopic, papers, abstracts, otherTone)
+
+        // Track tokens for the other tone
+        await incrementArticleTokens(today, otherTokens)
+
+        // Store other tone to Supabase
+        await storeArticleToSupabase(
+          today,
           selectedTopic,
-          papers,
-          abstracts,
-          otherTone
+          otherTone,
+          otherSummary,
+          papers
         )
-        await setCached(today, otherTone, {
+
+        await setCachedTopic(today, otherTone, {
           topic: selectedTopic,
           summary: otherSummary,
           references: papers,

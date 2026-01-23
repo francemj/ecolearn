@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+import { incrementChatTokens, getTodayDateString } from "@/app/lib/redis"
 
 export const runtime = "edge"
 
@@ -73,6 +74,7 @@ Base answers on this overview. When it helps, point users to specific papers (by
         model: "gpt-4-turbo",
         messages: chatMessages,
         stream: true,
+        stream_options: { include_usage: true },
         temperature: tone === "casual" ? 0.8 : 0.7,
         max_tokens: 800,
       }),
@@ -83,7 +85,42 @@ Base answers on this overview. When it helps, point users to specific papers (by
       throw new Error(errorData.error?.message || "OpenAI API request failed")
     }
 
-    return new Response(response.body, {
+    // Create a TransformStream to intercept and track token usage
+    const today = getTodayDateString()
+    let totalTokens = 0
+
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        // Pass through the chunk unchanged
+        controller.enqueue(chunk)
+
+        // Try to extract usage data from the chunk
+        const text = new TextDecoder().decode(chunk)
+        const lines = text.split("\n")
+
+        for (const line of lines) {
+          if (line.startsWith("data: ") && !line.includes("[DONE]")) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              // Usage is included in the final chunk when stream_options.include_usage is true
+              if (data.usage?.total_tokens) {
+                totalTokens = data.usage.total_tokens
+              }
+            } catch {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      },
+      async flush() {
+        // Stream is complete, update token count in Upstash
+        if (totalTokens > 0) {
+          await incrementChatTokens(today, totalTokens)
+        }
+      },
+    })
+
+    return new Response(response.body?.pipeThrough(transformStream), {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",

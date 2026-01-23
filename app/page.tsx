@@ -4,6 +4,7 @@ import { useState, useCallback } from "react"
 import TopicCard from "./components/TopicCard"
 import Chat from "./components/Chat"
 import ToneToggle, { Tone } from "./components/ToneToggle"
+import DailyImpactCounter from "./components/DailyImpactCounter"
 
 interface Reference {
   title: string
@@ -65,6 +66,7 @@ export default function Home() {
             Research overviews on sustainability topics, with papers to explore
             further.
           </p>
+          <DailyImpactCounter />
         </header>
 
         <TopicCard

@@ -41,10 +41,6 @@ export default function Chat({ topicContext, tone }: ChatProps) {
     if (messages.length > 0) scrollToBottom()
   }, [messages])
 
-  const estimateTokens = (text: string): number => {
-    return Math.ceil(text.length / 4)
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isLoading) return
@@ -55,9 +51,6 @@ export default function Chat({ topicContext, tone }: ChatProps) {
     setInput("")
     setIsLoading(true)
     setError(null)
-
-    const userTokens = estimateTokens(input)
-    setTotalTokens((prev) => prev + userTokens)
 
     try {
       const response = await fetch("/api/chat", {
@@ -85,6 +78,7 @@ export default function Chat({ topicContext, tone }: ChatProps) {
       }
 
       let assistantMessage = ""
+      let streamTokens = 0
       setMessages((prev) => [...prev, { role: "assistant", content: "" }])
 
       let buffer = ""
@@ -108,6 +102,8 @@ export default function Chat({ topicContext, tone }: ChatProps) {
 
           try {
             const parsed = JSON.parse(data)
+
+            // Extract content from delta
             const content = parsed.choices?.[0]?.delta?.content
             if (content) {
               assistantMessage += content
@@ -120,14 +116,21 @@ export default function Chat({ topicContext, tone }: ChatProps) {
                 return updated
               })
             }
+
+            // Extract usage from final chunk (when stream_options.include_usage is true)
+            if (parsed.usage?.total_tokens) {
+              streamTokens = parsed.usage.total_tokens
+            }
           } catch {
             // Skip malformed JSON (shouldn't happen with proper buffering)
           }
         }
       }
 
-      const assistantTokens = estimateTokens(assistantMessage)
-      setTotalTokens((prev) => prev + assistantTokens)
+      // Update token count with actual usage from stream
+      if (streamTokens > 0) {
+        setTotalTokens((prev) => prev + streamTokens)
+      }
     } catch (err) {
       console.error("Chat error:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
