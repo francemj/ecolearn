@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import TopicCard from "./components/TopicCard"
 import Chat from "./components/Chat"
-import ToneToggle, { Tone } from "./components/ToneToggle"
-import DailyImpactCounter from "./components/DailyImpactCounter"
+import { Tone } from "./components/ToneToggle"
 
 interface Reference {
   title: string
@@ -24,6 +23,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [generatingOnTheSpot, setGeneratingOnTheSpot] = useState(false)
   const [tone, setTone] = useState<Tone>("academic")
+  const [mounted, setMounted] = useState(false)
 
   const fetchTopic = useCallback(async (currentTone: Tone) => {
     try {
@@ -53,10 +53,31 @@ export default function Home() {
     [fetchTopic]
   )
 
+  // Sync from localStorage after mount to avoid hydration mismatch.
+  // Defer setState to a microtask so it runs in a callback, not synchronously in the effect.
+  useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      const saved = localStorage.getItem("tone") as Tone | null
+      if (saved === "academic" || saved === "casual") {
+        setTone(saved)
+      }
+      setMounted(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (mounted && (tone === "academic" || tone === "casual")) {
+      fetchTopic(tone)
+    }
+  }, [fetchTopic, tone, mounted])
+
   return (
     <main className="min-h-screen py-12 px-4 transition-colors duration-300 bg-gradient-to-b from-white to-sage-light dark:from-gray-900 dark:to-dark-slate">
-      <ToneToggle onToneChange={handleToneChange} />
-
       <div className="max-w-4xl mx-auto">
         <header className="mb-12 text-center fade-in">
           <h1 className="text-5xl md:text-6xl font-light mb-4 bg-gradient-to-r from-dark-teal via-dark-green to-sage-green dark:from-sage-green dark:via-sage-light dark:to-sage-green bg-clip-text text-transparent">
@@ -66,13 +87,14 @@ export default function Home() {
             Research overviews on sustainability topics, with papers to explore
             further.
           </p>
-          <DailyImpactCounter />
         </header>
 
         <TopicCard
           topic={topic}
+          tone={tone}
           loading={loading}
           generatingOnTheSpot={generatingOnTheSpot}
+          onToneChange={handleToneChange}
         />
 
         {topic && !loading && <Chat topicContext={topic} tone={tone} />}

@@ -1,5 +1,8 @@
 "use client"
 
+import ToneToggle, { Tone } from "./ToneToggle"
+import DailyImpactCounter from "./DailyImpactCounter"
+
 interface Reference {
   title: string
   authors: string[]
@@ -13,14 +16,18 @@ interface TopicCardProps {
     summary: string
     references: Reference[]
   } | null
+  tone: Tone
   loading: boolean
   generatingOnTheSpot?: boolean
+  onToneChange?: (tone: Tone) => void
 }
 
 export default function TopicCard({
   topic,
+  tone,
   loading,
   generatingOnTheSpot = false,
+  onToneChange,
 }: TopicCardProps) {
   if (loading && generatingOnTheSpot) {
     return (
@@ -63,10 +70,18 @@ export default function TopicCard({
   }
 
   return (
-    <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-8 mb-8 fade-in border border-sage-green/30 dark:border-sage-green/50">
+    <div className="bg-gradient-to-br from-sage-light/50 to-white dark:from-gray-800 dark:to-gray-900 rounded-lg p-4 xs:p-8 mb-8 fade-in border border-sage-green/30 dark:border-sage-green/50">
       <div className="mb-6">
-        <div className="inline-block px-4 py-1 bg-gradient-to-r from-dark-teal to-dark-green text-white text-sm rounded-full mb-4">
-          Today&apos;s Topic
+        <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+          <div className="flex items-center gap-2">
+            <div className="inline-block px-4 py-2 bg-gradient-to-r from-dark-teal to-dark-green text-white text-sm rounded-full border border-sage-green/30 dark:border-sage-green/50">
+              Today&apos;s Topic
+            </div>
+            <DailyImpactCounter />
+          </div>
+          {onToneChange && (
+            <ToneToggle tone={tone} onToneChange={onToneChange} />
+          )}
         </div>
         <h2 className="text-3xl md:text-4xl font-light capitalize leading-relaxed text-dark-teal dark:text-sage-light mb-6">
           {topic.topic}

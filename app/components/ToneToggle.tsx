@@ -1,51 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
-
 export type Tone = "academic" | "casual"
 
 interface ToneToggleProps {
+  tone: Tone
   onToneChange: (tone: Tone) => void
 }
 
-export default function ToneToggle({ onToneChange }: ToneToggleProps) {
-  const [tone, setTone] = useState<Tone>("academic")
-  const [mounted, setMounted] = useState(false)
-
-  // Sync from localStorage after mount to avoid hydration mismatch.
-  // Defer setState to a microtask so it runs in a callback, not synchronously in the effect.
-  useEffect(() => {
-    let cancelled = false
-    queueMicrotask(() => {
-      if (cancelled) return
-      const saved = localStorage.getItem("tone") as Tone | null
-      if (saved === "academic" || saved === "casual") {
-        setTone(saved)
-      }
-      setMounted(true)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    if (mounted && (tone === "academic" || tone === "casual")) {
-      onToneChange(tone)
-    }
-  }, [onToneChange, tone, mounted])
-
-  const toggleTone = () => {
-    const newTone: Tone = tone === "academic" ? "casual" : "academic"
-    setTone(newTone)
-    localStorage.setItem("tone", newTone)
-    onToneChange(newTone)
-  }
-
+export default function ToneToggle({ tone, onToneChange }: ToneToggleProps) {
   return (
     <button
-      onClick={toggleTone}
-      className="fixed top-6 right-20 px-4 py-3 rounded-full bg-gradient-to-br from-sage-light to-sage-green/20 dark:from-dark-teal dark:to-dark-green hover:from-sage-green/30 hover:to-sage-green/40 dark:hover:from-dark-green dark:hover:to-sage-green transition-all shadow-lg hover:shadow-xl border border-sage-green/30 dark:border-sage-green/50 text-sm font-medium text-dark-teal dark:text-sage-light"
+      className={`px-4 py-2 rounded-full bg-gradient-to-br from-sage-light to-sage-green/20 dark:from-dark-teal dark:to-dark-green hover:from-sage-green/30 hover:to-sage-green/40 dark:hover:from-dark-green dark:hover:to-sage-green transition-all shadow-lg hover:shadow-xl border border-sage-green/30 dark:border-sage-green/50 text-sm font-medium text-dark-teal dark:text-sage-light`}
+      onClick={() => onToneChange(tone === "academic" ? "casual" : "academic")}
       aria-label="Toggle tone"
       title={`Switch to ${tone === "academic" ? "casual" : "academic"} tone`}
     >
