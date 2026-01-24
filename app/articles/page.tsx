@@ -42,6 +42,7 @@ export default function ArticlesPage() {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     })
   }
 

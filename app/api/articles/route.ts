@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { supabase, DailyArticle } from "@/app/lib/supabase"
+import { getTodayDateString } from "@/app/lib/redis"
 
 export const runtime = "edge"
 
@@ -12,9 +13,11 @@ export async function GET() {
   }
 
   try {
+    const today = getTodayDateString()
     const { data, error } = await supabase
       .from("daily_articles")
       .select("id, date, topic, created_at")
+      .neq("date", today)
       .order("date", { ascending: false })
 
     if (error) {

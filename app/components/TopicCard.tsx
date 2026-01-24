@@ -99,6 +99,7 @@ export default function TopicCard({
               year: "numeric",
               month: "long",
               day: "numeric",
+              timeZone: "UTC",
             })}
           </p>
         )}

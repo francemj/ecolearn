@@ -19,13 +19,13 @@ export const CACHE_TTL_48H = 86400 * 2 // 48 hours in seconds
 
 export function getTodayDateString(): string {
   const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`
 }
 
 export function getYesterdayDateString(): string {
   const now = new Date()
-  now.setDate(now.getDate() - 1)
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  now.setUTCDate(now.getUTCDate() - 1)
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`
 }
 
 // ============================================================================
