@@ -20,6 +20,12 @@ interface TopicCardProps {
   loading: boolean
   generatingOnTheSpot?: boolean
   onToneChange?: (tone: Tone) => void
+  /** Label shown in the badge (defaults to "Today's Topic") */
+  label?: string
+  /** Whether to show the daily impact counter (defaults to true) */
+  showImpactCounter?: boolean
+  /** Date string to display (for archived articles) */
+  date?: string
 }
 
 export default function TopicCard({
@@ -28,6 +34,9 @@ export default function TopicCard({
   loading,
   generatingOnTheSpot = false,
   onToneChange,
+  label = "Today's Topic",
+  showImpactCounter = true,
+  date,
 }: TopicCardProps) {
   if (loading && generatingOnTheSpot) {
     return (
@@ -75,14 +84,24 @@ export default function TopicCard({
         <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
           <div className="flex items-center gap-2">
             <div className="inline-block px-4 py-2 bg-gradient-to-r from-dark-teal to-dark-green text-white text-sm rounded-full border border-sage-green/30 dark:border-sage-green/50">
-              Today&apos;s Topic
+              {label}
             </div>
-            <DailyImpactCounter />
+            {showImpactCounter && <DailyImpactCounter />}
           </div>
           {onToneChange && (
             <ToneToggle tone={tone} onToneChange={onToneChange} />
           )}
         </div>
+        {date && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            {new Date(date).toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        )}
         <h2 className="text-3xl md:text-4xl font-light capitalize leading-relaxed text-dark-teal dark:text-sage-light mb-6">
           {topic.topic}
         </h2>

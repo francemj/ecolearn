@@ -68,11 +68,11 @@ export default function DailyImpactCounter() {
       <DailyImpactTooltip formatted={formatted} />
 
       {/* Show full panel on md and up */}
-      <div className="fade-in hidden sm:block">
+      <div className="fade-in hidden md:block">
         <div className="inline-flex flex-wrap flex-row w-full items-center justify-around gap-3 px-3 py-1 rounded-2xl bg-gradient-to-br from-sage-light/40 to-white/60 dark:from-gray-800/60 dark:to-gray-900/60 border border-sage-green/30 dark:border-sage-green/40 shadow-sm">
           <div className="flex items-center gap-2 min-w-fit">
             <span className="text-sm font-medium text-dark-green dark:text-sage-light">
-              AI Impact:
+              AI Impact ≈
             </span>
           </div>
           <div className="flex items-baseline gap-1 text-gray-700 dark:text-gray-200 min-w-fit">

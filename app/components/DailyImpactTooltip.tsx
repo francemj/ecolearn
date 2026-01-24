@@ -74,16 +74,16 @@ export default function DailyImpactTooltip({
           <div className="px-4 py-3 rounded-xl bg-gradient-to-br from-sage-light/90 to-white/90 dark:from-gray-800/90 dark:to-gray-900/90 border border-sage-green/30 dark:border-sage-green/40 shadow-xl drop-shadow-lg backdrop-blur-sm min-w-[180px] text-xs space-y-2">
             <div className="flex flex-col items-center">
               <span className="font-medium text-dark-green dark:text-sage-light mb-2">
-                Today&apos;s AI Impact:
+                AI Impact ≈
               </span>
               <div className="flex flex-row gap-3 justify-center text-gray-800 dark:text-gray-200">
                 <span>
-                  <span className="font-light">{formatted.energy}</span>{" "}
+                  <span className="font-light">~{formatted.energy}</span>{" "}
                   <span className="text-gray-500 dark:text-gray-400">Wh</span>
                 </span>
                 <span className="text-gray-400 dark:text-gray-500">•</span>
                 <span>
-                  <span className="font-light">{formatted.co2}</span>{" "}
+                  <span className="font-light">~{formatted.co2}</span>{" "}
                   <span className="text-gray-500 dark:text-gray-400">
                     g CO₂
                   </span>
