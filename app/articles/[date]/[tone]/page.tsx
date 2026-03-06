@@ -101,7 +101,7 @@ export default function ArticlePage({
             loading={loading}
             onToneChange={handleToneChange}
             label={article ? formatDateForLabel(article.date) : "Loading..."}
-            showImpactCounter={false}
+            showImpactCounter={true}
             date={article?.date}
           />
         )}

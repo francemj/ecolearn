@@ -86,7 +86,7 @@ export default function TopicCard({
             <div className="inline-block px-4 py-2 bg-gradient-to-r from-dark-teal to-dark-green text-white text-sm rounded-full border border-sage-green/30 dark:border-sage-green/50">
               {label}
             </div>
-            {showImpactCounter && <DailyImpactCounter />}
+            {showImpactCounter && <DailyImpactCounter date={date} />}
           </div>
           {onToneChange && (
             <ToneToggle tone={tone} onToneChange={onToneChange} />
