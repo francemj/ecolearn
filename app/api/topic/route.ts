@@ -64,10 +64,13 @@ async function generateAISummary(
 
   const papersContext = papers
     .map((paper, idx) => {
+      const raw = abstracts[idx]
       const focus =
-        abstracts[idx].length > 220
-          ? abstracts[idx].slice(0, 220).trim() + "…"
-          : abstracts[idx]
+        !raw || raw === "Abstract not available."
+          ? "(abstract not available)"
+          : raw.length > 220
+            ? raw.slice(0, 220).trim() + "…"
+            : raw
       return `[${idx + 1}] "${paper.title}" (${paper.year}) — ${paper.authors.join(", ")}
 Focus: ${focus}
 URL: ${paper.url || "N/A"}`
@@ -211,29 +214,29 @@ export async function GET(request: NextRequest) {
     const papers: Reference[] = []
     const abstracts: string[] = []
 
+    const ABSTRACT_PLACEHOLDER = "Abstract not available."
     for (const work of data.results.slice(0, 7)) {
+      const title = work.title || "Untitled Research Paper"
+      const authors =
+        work.authorships
+          ?.slice(0, 3)
+          .map(
+            (a: { author: { display_name: string } }) => a.author.display_name
+          ) || []
+      const url =
+        work.primary_location?.landing_page_url ||
+        (work.doi
+          ? `https://doi.org/${work.doi.replace("https://doi.org/", "")}`
+          : null)
       const abstract = reconstructAbstract(work.abstract_inverted_index)
-      if (abstract) {
-        const authors =
-          work.authorships
-            ?.slice(0, 3)
-            .map(
-              (a: { author: { display_name: string } }) => a.author.display_name
-            ) || []
-        const url =
-          work.primary_location?.landing_page_url ||
-          (work.doi
-            ? `https://doi.org/${work.doi.replace("https://doi.org/", "")}`
-            : null)
 
-        papers.push({
-          title: work.title || "Untitled Research Paper",
-          authors,
-          year: work.publication_year || new Date().getFullYear(),
-          url,
-        })
-        abstracts.push(abstract)
-      }
+      papers.push({
+        title,
+        authors,
+        year: work.publication_year || new Date().getFullYear(),
+        url,
+      })
+      abstracts.push(abstract.trim() || ABSTRACT_PLACEHOLDER)
 
       if (papers.length >= 5) break
     }
@@ -245,8 +248,7 @@ export async function GET(request: NextRequest) {
           "Research papers on this topic are being processed. Check back soon for insights.",
         references: [],
       }
-      await setCachedTopic(today, "academic", fallbackData)
-      await setCachedTopic(today, "casual", fallbackData)
+      // Do not cache so a retry can succeed if OpenAlex returns works with abstracts later
       return NextResponse.json(fallbackData)
     }
 
