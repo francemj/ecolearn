@@ -141,7 +141,22 @@ export default function ArticlesPage() {
           </Link>
         </div>
 
-        <Footer />
+        <Footer>
+          <div className="flex items-center justify-center gap-6 text-sm">
+            <Link
+              href="/why"
+              className="text-dark-teal dark:text-sage-green hover:text-dark-green dark:hover:text-sage-light underline underline-offset-4 transition-colors"
+            >
+              Why I made this
+            </Link>
+            <Link
+              href="/"
+              className="text-dark-teal dark:text-sage-green hover:text-dark-green dark:hover:text-sage-light underline underline-offset-4 transition-colors"
+            >
+              Today&apos;s topic
+            </Link>
+          </div>
+        </Footer>
       </div>
     </main>
   )

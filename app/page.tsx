@@ -6,6 +6,7 @@ import Chat from "./components/Chat"
 import Header from "./components/Header"
 import Footer from "./components/Footer"
 import { Tone } from "./components/ToneToggle"
+import Link from "next/link"
 
 interface Reference {
   title: string
@@ -97,12 +98,20 @@ export default function Home() {
         {topic && !loading && <Chat topicContext={topic} tone={tone} />}
 
         <Footer>
-          <a
-            href="/articles"
-            className="inline-block text-sm text-dark-teal dark:text-sage-green hover:text-dark-green dark:hover:text-sage-light underline underline-offset-4 transition-colors"
-          >
-            Browse Previous Articles →
-          </a>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            <Link
+              href="/articles"
+              className="inline-block text-sm text-dark-teal dark:text-sage-green hover:text-dark-green dark:hover:text-sage-light underline underline-offset-4 transition-colors"
+            >
+              Browse Previous Articles →
+            </Link>
+            <Link
+              href="/why"
+              className="inline-block text-sm text-dark-teal dark:text-sage-green hover:text-dark-green dark:hover:text-sage-light underline underline-offset-4 transition-colors"
+            >
+              Why I made this →
+            </Link>
+          </div>
         </Footer>
       </div>
     </main>

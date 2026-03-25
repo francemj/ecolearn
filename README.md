@@ -8,6 +8,14 @@ EcoLearn Daily transforms how you engage with environmental research. Instead of
 
 **Design Philosophy**: Built to learn, not to keep you hooked. No ads, gamification, notifications, or tracking.
 
+## Why this exists
+
+I built EcoLearn Daily because I wanted to use AI for good—and to push back (a little) against the direction I see a lot of tech moving: toward products optimized for attention capture.
+
+This project aims for quick, high-quality interaction: a single focused topic per day, a synthesis grounded in real papers, and an optional chat for follow-up questions—without dark patterns or “just one more minute” design. It also tries to keep the environmental story honest by making AI’s footprint visible, so the learning includes the medium itself.
+
+The longer version lives at `/why`.
+
 ## Setup
 
 1. **Clone and install**
@@ -93,11 +101,14 @@ This transparency helps users understand the environmental cost of AI interactio
       route.ts              - Fetches papers and generates AI summaries (tone-aware)
       topics.ts             - Pointed topic list (~90 items) for OpenAlex and display
     /chat/route.ts          - Handles interactive chat with streaming (tone-aware)
+  /why
+    page.tsx                - Why this site exists
   /components
     TopicCard.tsx           - Displays AI summary with references
     Chat.tsx                - Chat interface with message streaming
     ImpactCounter.tsx       - Shows environmental cost
-    DarkModeToggle.tsx      - Theme switcher
+    DailyImpactCounter.tsx  - Shows daily impact totals
+    DailyImpactTooltip.tsx  - Explains daily impact totals
     ToneToggle.tsx          - Academic/casual tone switcher
   globals.css               - TailwindCSS styles with custom colors
   layout.tsx                - Root layout
@@ -110,9 +121,10 @@ This transparency helps users understand the environmental cost of AI interactio
 - **TypeScript**
 - **TailwindCSS** with custom green/teal palette
 - **React 19**
-- **OpenAI API** — GPT-4o for topic summaries, GPT-4 Turbo for chat
+- **OpenAI API** — `gpt-4o` for topic summaries, `gpt-4-turbo` for chat
 - **OpenAlex API** (academic paper database; no API key required)
 - **Upstash Redis** (optional; shared cache for topic API when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set)
+- **Supabase** (optional; persists generated daily articles for the archive)
 
 ## Color Palette
 
