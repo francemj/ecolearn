@@ -82,20 +82,26 @@ URL: ${paper.url || "N/A"}`
 - Do NOT simply summarize the provided sources. Use them as references to cite when they support, expand on, argue against, or complicate a point. Never exclude a source because it argues against your point; that is anti-science and anti-progress.
 - Use citation markers [1], [2], … matching the source list below; direct readers to those sources to dive deeper on specific aspects.
 - Be calm, factual, and engaging. Use accessible language for non-experts.
-- Be 4-5 paragraphs long. Focus on what we know and what matters.`
+- Be 4-5 paragraphs long. Focus on what we know and what matters.
+- End with a short "Implementation / Next Steps" paragraph naming 2-4 concrete organizations, public agencies, or government programs actively working on this topic.`
 
   const casualSystemPrompt = `You're a friendly guide who writes research overviews on environmental topics in a laid-back, conversational way. Your task is a research overview using your knowledge—not a summary of the provided sources.
 
 - Do NOT simply summarize the provided sources. Use them as references to cite when they support, expand on, argue against, or complicate a point. Never exclude a source because it argues against you; that is anti-science and anti-progress.
 - Use citation markers [1], [2], … matching the source list; direct readers to those sources to dive deeper. Be warm, approachable, and accurate.
-- Be 4-5 paragraphs. Make complex ideas feel accessible without dumbing them down.`
+- Be 4-5 paragraphs. Make complex ideas feel accessible without dumbing them down.
+- End with a short "Implementation / Next Steps" paragraph naming 2-4 concrete organizations, public agencies, or government programs actively working on this topic.`
 
   const academicUserPrompt = `Write a research overview of "${topic}" that draws on your knowledge to explain the topic. Cite the provided sources [1], [2], … where they support, deepen, argue against, or complicate a point—never exclude a source because it argues against you. Do not summarize the sources; use them only as citations and further-reading pointers. Encourage readers to use those sources to explore further.
+
+End with a clearly labeled "Implementation / Next Steps" section that names specific organizations, government programs, or public initiatives related to this topic and what they are doing.
 
 Sources:
 ${papersContext}`
 
   const casualUserPrompt = `Write a friendly research overview of "${topic}" using your knowledge. Cite the sources [1], [2], … where they support, deepen, argue against, or complicate a point—never exclude a source because it argues against you. Don't summarize the sources; use them as citations and pointers for further reading. Encourage readers to dive into those papers to learn more.
+
+End with a clearly labeled "Implementation / Next Steps" section that names specific organizations, government programs, or public initiatives related to this topic and what they are doing.
 
 Sources:
 ${papersContext}`
