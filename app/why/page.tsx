@@ -70,6 +70,39 @@ export default function WhyPage() {
           </div>
         </section>
 
+        <section className="bg-gradient-to-br from-white/80 to-sage-light/40 dark:from-gray-800/70 dark:to-gray-900/80 rounded-lg p-6 md:p-10 mb-8 fade-in border border-sage-green/30 dark:border-sage-green/50">
+          <h2 className="text-2xl md:text-3xl text-dark-green dark:text-sage-light mb-6">
+            About the thought process
+          </h2>
+
+          <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p>
+              The product choices are intentionally narrow: one topic per day,
+              5-7 source papers, and a short synthesis in either an academic or
+              casual tone. That keeps the app useful without turning it into a
+              feed you can scroll forever.
+            </p>
+            <p>
+              Topic selection is deterministic by date, so everyone gets the
+              same subject each day. The list is broad (around 90 pointed
+              sustainability subthemes) and interleaved across categories to
+              avoid repetitive runs of similar subjects.
+            </p>
+            <p>
+              The summary is generated with citations and linked references
+              because the goal is not to replace papers, but to lower the
+              barrier to opening them. Fast access to primary sources matters
+              more than polished AI prose.
+            </p>
+            <p>
+              Infrastructure decisions follow the same mindset: optional shared
+              caching reduces duplicate model calls, and token usage is tracked
+              to surface energy and emissions estimates. If this app teaches
+              sustainability, the delivery mechanism should stay visible too.
+            </p>
+          </div>
+        </section>
+
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/"
