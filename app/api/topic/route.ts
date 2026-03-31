@@ -47,6 +47,18 @@ interface SummaryResult {
   tokensUsed: number
 }
 
+interface TopicResearchResult {
+  topic: string
+  papers: Reference[]
+  abstracts: string[]
+  source: "openalex" | "web"
+  webSummary?: string
+  webTokensUsed?: number
+}
+
+const MIN_ARTICLES = 5
+const MAX_TOPIC_ATTEMPTS = 6
+
 async function generateAISummary(
   topic: string,
   papers: Reference[],
@@ -147,6 +159,143 @@ ${papersContext}`
   }
 }
 
+function extractUrls(text: string): string[] {
+  const matches = text.match(/https?:\/\/[^\s)]+/g) || []
+  return [...new Set(matches.map((url) => url.replace(/[.,;]$/, "")))]
+}
+
+async function generateWebResearchSummary(
+  topic: string,
+  tone: "academic" | "casual"
+): Promise<SummaryResult | null> {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return null
+
+  const styleLine =
+    tone === "casual"
+      ? "Write in a friendly, conversational style."
+      : "Write in a clear, research-grounded style for non-experts."
+
+  const prompt = `Research "${topic}" using web search and write a 4-5 paragraph overview.
+
+${styleLine}
+- Focus on what has strong evidence, what is uncertain, and what is changing.
+- Include inline links (plain URLs) to reputable sources used in the overview.
+- If evidence is too thin or contradictory to write a reliable overview, answer with exactly: INSUFFICIENT_WEB_EVIDENCE`
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        tools: [{ type: "web_search_preview" }],
+        input: prompt,
+        temperature: tone === "casual" ? 0.7 : 0.6,
+      }),
+    })
+
+    if (!response.ok) return null
+    const data = await response.json()
+    const summary = (data.output_text || "").trim()
+    if (!summary || summary === "INSUFFICIENT_WEB_EVIDENCE") return null
+
+    const tokensUsed = data.usage?.total_tokens || 0
+    return { summary, tokensUsed }
+  } catch (error) {
+    console.error("Error generating web research summary:", error)
+    return null
+  }
+}
+
+async function fetchOpenAlexPapers(
+  topic: string
+): Promise<{ papers: Reference[]; abstracts: string[] }> {
+  const searchUrl = `https://api.openalex.org/works?filter=title_and_abstract.search:${encodeURIComponent(topic)},type:article,from_publication_date:2020-01-01&sort=cited_by_count:desc&per_page=10`
+  const response = await fetch(searchUrl, {
+    headers: {
+      "User-Agent": "EcoLearn-Daily (mailto:research@example.com)",
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error("OpenAlex API request failed")
+  }
+
+  const data = await response.json()
+  const papers: Reference[] = []
+  const abstracts: string[] = []
+  const ABSTRACT_PLACEHOLDER = "Abstract not available."
+
+  for (const work of data.results || []) {
+    const title = work.title || "Untitled Research Paper"
+    const authors =
+      work.authorships
+        ?.slice(0, 3)
+        .map((a: { author: { display_name: string } }) => a.author.display_name) ||
+      []
+    const url =
+      work.primary_location?.landing_page_url ||
+      (work.doi
+        ? `https://doi.org/${work.doi.replace("https://doi.org/", "")}`
+        : null)
+    const abstract = reconstructAbstract(work.abstract_inverted_index)
+
+    papers.push({
+      title,
+      authors,
+      year: work.publication_year || new Date().getFullYear(),
+      url,
+    })
+    abstracts.push(abstract.trim() || ABSTRACT_PLACEHOLDER)
+
+    if (papers.length >= 7) break
+  }
+
+  return { papers, abstracts }
+}
+
+async function findTopicResearch(
+  startIndex: number,
+  tone: "academic" | "casual"
+): Promise<TopicResearchResult | null> {
+  for (let offset = 0; offset < MAX_TOPIC_ATTEMPTS; offset++) {
+    const topic = TOPICS[(startIndex + offset) % TOPICS.length]
+    try {
+      const { papers, abstracts } = await fetchOpenAlexPapers(topic)
+      if (papers.length >= MIN_ARTICLES) {
+        return { topic, papers, abstracts, source: "openalex" }
+      }
+
+      const webSummary = await generateWebResearchSummary(topic, tone)
+      if (webSummary) {
+        const urls = extractUrls(webSummary.summary)
+        const webReferences: Reference[] = urls.slice(0, 7).map((url, idx) => ({
+          title: `Web source ${idx + 1}`,
+          authors: [],
+          year: new Date().getFullYear(),
+          url,
+        }))
+        return {
+          topic,
+          papers: webReferences,
+          abstracts: [],
+          source: "web",
+          webSummary: webSummary.summary,
+          webTokensUsed: webSummary.tokensUsed,
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching research for topic "${topic}":`, error)
+    }
+  }
+
+  return null
+}
+
 async function storeArticleToSupabase(
   date: string,
   topic: string,
@@ -189,92 +338,50 @@ export async function GET(request: NextRequest) {
     if (cached) return NextResponse.json(cached)
 
     const topicIndex = hashDateToTopicIndex(today) % TOPICS.length
-    const selectedTopic = TOPICS[topicIndex]
+    const research = await findTopicResearch(topicIndex, tone)
 
-    const searchUrl = `https://api.openalex.org/works?filter=title_and_abstract.search:${encodeURIComponent(selectedTopic)},type:article,from_publication_date:2020-01-01&sort=cited_by_count:desc&per_page=7`
-
-    const response = await fetch(searchUrl, {
-      headers: {
-        "User-Agent": "EcoLearn-Daily (mailto:research@example.com)",
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error("OpenAlex API request failed")
-    }
-
-    const data = await response.json()
-
-    if (!data.results || data.results.length === 0) {
+    if (!research) {
       const fallbackData = {
-        topic: selectedTopic,
+        topic: TOPICS[topicIndex],
         summary:
-          "Today's research is still being fetched. Check back soon for an AI-generated summary of recent sustainability research.",
+          "Today's topic does not yet have enough reliable coverage. We'll retry soon with a better-supported topic.",
         references: [],
       }
-      await setCachedTopic(today, "academic", fallbackData)
-      await setCachedTopic(today, "casual", fallbackData)
       return NextResponse.json(fallbackData)
     }
 
-    const papers: Reference[] = []
-    const abstracts: string[] = []
-
-    const ABSTRACT_PLACEHOLDER = "Abstract not available."
-    for (const work of data.results.slice(0, 7)) {
-      const title = work.title || "Untitled Research Paper"
-      const authors =
-        work.authorships
-          ?.slice(0, 3)
-          .map(
-            (a: { author: { display_name: string } }) => a.author.display_name
-          ) || []
-      const url =
-        work.primary_location?.landing_page_url ||
-        (work.doi
-          ? `https://doi.org/${work.doi.replace("https://doi.org/", "")}`
-          : null)
-      const abstract = reconstructAbstract(work.abstract_inverted_index)
-
-      papers.push({
-        title,
-        authors,
-        year: work.publication_year || new Date().getFullYear(),
-        url,
-      })
-      abstracts.push(abstract.trim() || ABSTRACT_PLACEHOLDER)
-
-      if (papers.length >= 5) break
+    let summary = ""
+    let tokensUsed = 0
+    if (research.source === "web") {
+      summary = research.webSummary || ""
+      tokensUsed = research.webTokensUsed || 0
+    } else {
+      const aiSummary = await generateAISummary(
+        research.topic,
+        research.papers,
+        research.abstracts,
+        tone
+      )
+      summary = aiSummary.summary
+      tokensUsed = aiSummary.tokensUsed
     }
-
-    if (papers.length === 0) {
-      const fallbackData = {
-        topic: selectedTopic,
-        summary:
-          "Research papers on this topic are being processed. Check back soon for insights.",
-        references: [],
-      }
-      // Do not cache so a retry can succeed if OpenAlex returns works with abstracts later
-      return NextResponse.json(fallbackData)
-    }
-
-    const { summary, tokensUsed } = await generateAISummary(
-      selectedTopic,
-      papers,
-      abstracts,
-      tone
-    )
 
     // Track tokens used for article generation
     await incrementArticleTokens(today, tokensUsed)
 
     // Store article to Supabase
-    await storeArticleToSupabase(today, selectedTopic, tone, summary, papers)
+    await storeArticleToSupabase(
+      today,
+      research.topic,
+      tone,
+      summary,
+      research.papers
+    )
 
     const topicData = {
-      topic: selectedTopic,
+      topic: research.topic,
       summary,
-      references: papers,
+      references: research.papers,
     }
     await setCachedTopic(today, tone, topicData)
 
@@ -283,8 +390,23 @@ export async function GET(request: NextRequest) {
       try {
         const existing = await getCachedTopic(today, otherTone)
         if (existing) return
-        const { summary: otherSummary, tokensUsed: otherTokens } =
-          await generateAISummary(selectedTopic, papers, abstracts, otherTone)
+        let otherSummary = ""
+        let otherTokens = 0
+        if (research.source === "web") {
+          const web = await generateWebResearchSummary(research.topic, otherTone)
+          if (!web) return
+          otherSummary = web.summary
+          otherTokens = web.tokensUsed
+        } else {
+          const generated = await generateAISummary(
+            research.topic,
+            research.papers,
+            research.abstracts,
+            otherTone
+          )
+          otherSummary = generated.summary
+          otherTokens = generated.tokensUsed
+        }
 
         // Track tokens for the other tone
         await incrementArticleTokens(today, otherTokens)
@@ -292,16 +414,16 @@ export async function GET(request: NextRequest) {
         // Store other tone to Supabase
         await storeArticleToSupabase(
           today,
-          selectedTopic,
+          research.topic,
           otherTone,
           otherSummary,
-          papers
+          research.papers
         )
 
         await setCachedTopic(today, otherTone, {
-          topic: selectedTopic,
+          topic: research.topic,
           summary: otherSummary,
-          references: papers,
+          references: research.papers,
         })
       } catch (e) {
         console.error("Prewarm other tone failed:", e)
