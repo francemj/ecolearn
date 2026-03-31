@@ -102,6 +102,9 @@ export default function DailyImpactCounter({ date }: { date?: string }) {
               </span>
             </span>
           </div>
+          <div className="text-xs text-gray-600 dark:text-gray-400 min-w-fit">
+            ~{formatted.relative[0]}
+          </div>
         </div>
       </div>
     </>

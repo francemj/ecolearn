@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react"
 export default function DailyImpactTooltip({
   formatted,
 }: {
-  formatted: { energy: string; co2: string }
+  formatted: { energy: string; co2: string; relative: string[] }
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -89,6 +89,9 @@ export default function DailyImpactTooltip({
                   </span>
                 </span>
               </div>
+              <p className="mt-2 text-center text-[11px] text-gray-600 dark:text-gray-400">
+                ~{formatted.relative[1]}
+              </p>
             </div>
           </div>
         </div>
