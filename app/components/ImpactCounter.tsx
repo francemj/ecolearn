@@ -20,6 +20,9 @@ export default function ImpactCounter({ totalTokens }: ImpactCounterProps) {
         This conversation has used about {formatted.energy} Wh (~{formatted.co2}{" "}
         g CO₂)
       </p>
+      <p className="mt-1 text-[11px] text-gray-600 dark:text-gray-400 text-center">
+        Roughly equal to {formatted.relative[0]} or {formatted.relative[1]}.
+      </p>
     </div>
   )
 }
