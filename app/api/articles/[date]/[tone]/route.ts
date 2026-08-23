@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabase, DailyArticle } from "@/app/lib/supabase"
+import { eq } from "drizzle-orm"
 
-export const runtime = "edge"
+import { db } from "@/app/db/client"
+import { dailyArticles } from "@/app/db/schema"
+
+export const runtime = "nodejs"
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +16,7 @@ export async function GET(
     return NextResponse.json({ error: "Invalid tone" }, { status: 400 })
   }
 
-  if (!supabase) {
+  if (!db) {
     return NextResponse.json(
       { error: "Database not configured" },
       { status: 503 }
@@ -21,29 +24,27 @@ export async function GET(
   }
 
   try {
-    const summaryColumn =
-      tone === "academic" ? "summary_academic" : "summary_casual"
+    const [article] = await db
+      .select({
+        date: dailyArticles.date,
+        topic: dailyArticles.topic,
+        summaryAcademic: dailyArticles.summaryAcademic,
+        summaryCasual: dailyArticles.summaryCasual,
+        sourcePapers: dailyArticles.sourcePapers,
+      })
+      .from(dailyArticles)
+      .where(eq(dailyArticles.date, date))
+      .limit(1)
 
-    const { data, error } = await supabase
-      .from("daily_articles")
-      .select(`id, date, topic, ${summaryColumn}, source_papers, created_at`)
-      .eq("date", date)
-      .single()
-
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Article not found" },
-          { status: 404 }
-        )
-      }
-      console.error("Error fetching article:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    // Previously this was a PostgREST .single() and the not-found case arrived
+    // as error code PGRST116. With no rows returned there is no error to
+    // inspect, so absence is checked directly.
+    if (!article) {
+      return NextResponse.json({ error: "Article not found" }, { status: 404 })
     }
 
-    const article = data as DailyArticle
     const summary =
-      tone === "academic" ? article.summary_academic : article.summary_casual
+      tone === "academic" ? article.summaryAcademic : article.summaryCasual
 
     if (!summary) {
       return NextResponse.json(
@@ -56,7 +57,7 @@ export async function GET(
       date: article.date,
       topic: article.topic,
       summary,
-      references: article.source_papers || [],
+      references: article.sourcePapers ?? [],
     })
   } catch (error) {
     console.error("Article API error:", error)

@@ -117,14 +117,14 @@ This transparency helps users understand the environmental cost of AI interactio
 
 ## Technologies Used
 
-- **Next.js 16** (App Router, Edge Runtime)
+- **Next.js 16** (App Router; chat streams on the Edge runtime, database routes run on Node)
 - **TypeScript**
 - **TailwindCSS** with custom green/teal palette
 - **React 19**
 - **OpenAI API** — `gpt-4o` for topic summaries, `gpt-4-turbo` for chat
 - **OpenAlex API** (academic paper database; no API key required)
 - **Upstash Redis** (optional; shared cache for topic API when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set)
-- **Supabase** (optional; persists generated daily articles for the archive)
+- **PostgreSQL** via Drizzle (optional; persists generated daily articles for the archive when `DATABASE_URL` is set)
 
 ## Color Palette
 

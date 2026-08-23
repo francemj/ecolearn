@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server"
-import { supabase, DailyArticle } from "@/app/lib/supabase"
+import { desc, ne } from "drizzle-orm"
+
+import { db } from "@/app/db/client"
+import { dailyArticles } from "@/app/db/schema"
 import { getTodayDateString } from "@/app/lib/redis"
 
-export const runtime = "edge"
+// Node, not edge: the Postgres driver needs a TCP socket, which the edge
+// runtime does not provide.
+export const runtime = "nodejs"
 
 export async function GET() {
-  if (!supabase) {
+  if (!db) {
     return NextResponse.json(
       { error: "Database not configured" },
       { status: 503 }
@@ -13,25 +18,18 @@ export async function GET() {
   }
 
   try {
-    const today = getTodayDateString()
-    const { data, error } = await supabase
-      .from("daily_articles")
-      .select("id, date, topic, created_at")
-      .neq("date", today)
-      .order("date", { ascending: false })
-
-    if (error) {
-      console.error("Error fetching articles:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    // Add available tones based on which summaries exist
-    const articles = (data as DailyArticle[]).map((article) => ({
-      id: article.id,
-      date: article.date,
-      topic: article.topic,
-      created_at: article.created_at,
-    }))
+    // Today is excluded because it is still being written; the homepage serves
+    // it from Redis instead.
+    const articles = await db
+      .select({
+        id: dailyArticles.id,
+        date: dailyArticles.date,
+        topic: dailyArticles.topic,
+        created_at: dailyArticles.createdAt,
+      })
+      .from(dailyArticles)
+      .where(ne(dailyArticles.date, getTodayDateString()))
+      .orderBy(desc(dailyArticles.date))
 
     return NextResponse.json({ articles })
   } catch (error) {
