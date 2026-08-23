@@ -7,17 +7,13 @@ import {
   getTodayDateString,
   incrementArticleTokens,
 } from "@/app/lib/redis"
-import { supabase } from "@/app/lib/supabase"
+import { db } from "@/app/db/client"
+import { dailyArticles, type SourcePaper as Reference } from "@/app/db/schema"
 
-export const runtime = "edge"
+// Node, not edge: the Postgres driver needs a TCP socket. The OpenAI call and
+// the after() background work are unaffected by the switch.
+export const runtime = "nodejs"
 export const maxDuration = 60
-
-interface Reference {
-  title: string
-  authors: string[]
-  year: number
-  url: string | null
-}
 
 function hashDateToTopicIndex(dateString: string): number {
   let hash = 0
@@ -235,8 +231,9 @@ async function fetchOpenAlexPapers(
     const authors =
       work.authorships
         ?.slice(0, 3)
-        .map((a: { author: { display_name: string } }) => a.author.display_name) ||
-      []
+        .map(
+          (a: { author: { display_name: string } }) => a.author.display_name
+        ) || []
     const url =
       work.primary_location?.landing_page_url ||
       (work.doi
@@ -296,28 +293,34 @@ async function findTopicResearch(
   return null
 }
 
-async function storeArticleToSupabase(
+/**
+ * Called once per tone for the same date — the second call must not wipe the
+ * summary the first one wrote. Only the column for this tone is in `set`, so
+ * the other tone's summary is left untouched on conflict.
+ */
+async function storeArticle(
   date: string,
   topic: string,
   tone: "academic" | "casual",
   summary: string,
   references: Reference[]
 ): Promise<void> {
-  if (!supabase) return
+  if (!db) return
   try {
-    const columnName =
-      tone === "academic" ? "summary_academic" : "summary_casual"
-    await supabase.from("daily_articles").upsert(
-      {
-        date,
-        topic,
-        [columnName]: summary,
-        source_papers: references,
-      },
-      { onConflict: "date" }
-    )
+    const summaryColumn =
+      tone === "academic"
+        ? { summaryAcademic: summary }
+        : { summaryCasual: summary }
+
+    await db
+      .insert(dailyArticles)
+      .values({ date, topic, sourcePapers: references, ...summaryColumn })
+      .onConflictDoUpdate({
+        target: dailyArticles.date,
+        set: { topic, sourcePapers: references, ...summaryColumn },
+      })
   } catch (e) {
-    console.error("Error storing article to Supabase:", e)
+    console.error("Error storing article:", e)
   }
 }
 
@@ -369,14 +372,8 @@ export async function GET(request: NextRequest) {
     // Track tokens used for article generation
     await incrementArticleTokens(today, tokensUsed)
 
-    // Store article to Supabase
-    await storeArticleToSupabase(
-      today,
-      research.topic,
-      tone,
-      summary,
-      research.papers
-    )
+    // Store article to the archive
+    await storeArticle(today, research.topic, tone, summary, research.papers)
 
     const topicData = {
       topic: research.topic,
@@ -393,7 +390,10 @@ export async function GET(request: NextRequest) {
         let otherSummary = ""
         let otherTokens = 0
         if (research.source === "web") {
-          const web = await generateWebResearchSummary(research.topic, otherTone)
+          const web = await generateWebResearchSummary(
+            research.topic,
+            otherTone
+          )
           if (!web) return
           otherSummary = web.summary
           otherTokens = web.tokensUsed
@@ -411,8 +411,8 @@ export async function GET(request: NextRequest) {
         // Track tokens for the other tone
         await incrementArticleTokens(today, otherTokens)
 
-        // Store other tone to Supabase
-        await storeArticleToSupabase(
+        // Store other tone
+        await storeArticle(
           today,
           research.topic,
           otherTone,
